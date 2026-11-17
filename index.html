@@ -1,2 +1,252 @@
-</html lang='fr'><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>StreamPlus — Démo</title><style>body{margin:0;background:#0b0918;color:white;font-family:system-ui}header{padding:24px;background:#171126;display:flex;justify-content:space-between;align-items:center}h1{color:#b28cff}main{max-width:1100px;margin:auto;padding:25px}.hero{padding:55px 25px;background:linear-gradient(120deg,#391b6d,#100b20);border-radius:20px}button{background:#823ef0;color:white;border:0;border-radius:9px;padding:13px;margin:5px;cursor:pointer}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px}.card{background:#211832;border-radius:12px;padding:24px;min-height:120px}nav button{background:transparent}input{padding:12px;border-radius:8px;border:0}small{color:#b7abc9}</style><header><h1>▶ StreamPlus</h1><nav><button onclick="show('accueil')">Accueil</button><button onclick="show('films')">Films</button><button onclick="show('series')">Séries</button><button onclick="show('profils')">Profils</button><button onclick="show('premium')">Premium</button></nav></header><main id='app'></main><script>const films=['Mission Maurice','L’île mystérieuse','Dernière frontière','Le secret du lagon'],series=['Chroniques de Port-Louis','Horizons','Les gardiens'];let fav=JSON.parse(localStorage.getItem('streamplus-fav')||'[]');function cards(a){return '<div class="cards">'+a.map(t=>'<div class="card"><h3>'+t+'</h3><small>Contenu fictif de démonstration</small><p><button onclick="watch(\''+t+'\')">▶ Regarder</button><button onclick="favorite(\''+t+'\')">♡</button></p></div>').join('')+'</div>'}function show(s){let html=s==='accueil'?'<div class="hero"><h2>Votre cinéma, partout.</h2><p>Découvrez StreamPlus — films et séries de démonstration.</p><button onclick="show(\'films\')">Explorer les films</button></div><h2>Tendances</h2>'+cards(films.slice(0,3)):s==='films'?'<h2>Films</h2>'+cards(films):s==='series'?'<h2>Séries</h2>'+cards(series):s==='profils'?'<h2>Profils</h2><button onclick="alert(\'Profil Démo sélectionné\')">Profil Démo</button><h3>Ma liste</h3>'+cards(fav):'<h2>Abonnements fictifs</h2><div class="cards"><div class="card">Gratuit — Rs 0</div><div class="card">Premium HD — Rs 199/mois</div><div class="card">Famille — Rs 349/mois</div></div><p>Aucun paiement réel.</p>';document.getElementById('app').innerHTML=html+'<p><small>Prototype uniquement. Aucun film commercial n’est diffusé.</small></p>'}function favorite(t){if(!fav.includes(t))fav.push(t);else fav=fav.filter(x=>x!==t);localStorage.setItem('streamplus-fav',JSON.stringify(fav));alert('Liste mise à jour')}function watch(t){document.getElementById('app').innerHTML='<h2>'+t+'</h2><p>Vidéo de démonstration librement accessible.</p><video controls width="100%" style="max-width:850px" src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"></video><p><button onclick="show(\'accueil\')">Retour</button></p>'}show('accueil')</script>
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StreamPlus</title>
+<style>
+:root {
+  --bg: #090711;
+  --card: #1c1630;
+  --purple: #9747ff;
+  --text: #ffffff;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+}
+header {
+  padding: 18px;
+  background: #130e22;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.logo {
+  color: #b77aff;
+  font-size: 26px;
+  font-weight: bold;
+}
+nav {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  overflow-x: auto;
+  background: #130e22;
+}
+button {
+  background: var(--purple);
+  color: white;
+  border: 0;
+  border-radius: 9px;
+  padding: 11px 15px;
+  cursor: pointer;
+}
+nav button { white-space: nowrap; }
+.hero {
+  padding: 55px 20px;
+  background: linear-gradient(135deg,#37115d,#100c20);
+}
+.hero h1 { font-size: 34px; }
+section { padding: 20px; }
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(145px,1fr));
+  gap: 15px;
+}
+.card {
+  background: var(--card);
+  border-radius: 13px;
+  overflow: hidden;
+  padding-bottom: 14px;
+}
+.poster {
+  height: 175px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg,#6427aa,#201234);
+  font-size: 52px;
+}
+.card h3 { padding: 0 12px; }
+.card button { margin: 5px; }
+.plan {
+  padding: 22px;
+  background: var(--card);
+  border-radius: 12px;
+}
+video {
+  width: 100%;
+  max-width: 850px;
+  border-radius: 12px;
+}
+footer {
+  text-align: center;
+  padding: 25px;
+  color: #aaa;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">▶ StreamPlus</div>
+  <span>PROTOTYPE</span>
+</header>
+
+<nav>
+  <button onclick="show('accueil')">Accueil</button>
+  <button onclick="show('films')">Films</button>
+  <button onclick="show('series')">Séries</button>
+  <button onclick="show('favoris')">Ma liste</button>
+  <button onclick="show('profils')">Profils</button>
+  <button onclick="show('abonnements')">Abonnements</button>
+</nav>
+
+<main id="app"></main>
+
+<footer>
+  StreamPlus © 2026 — Démonstration
+</footer>
+
+<script>
+const films = [
+  {title:"Aventure Mystère",type:"film",emoji:"🎬"},
+  {title:"Voyage Spatial",type:"film",emoji:"🚀"},
+  {title:"La Dernière Mission",type:"film",emoji:"🎥"},
+  {title:"Monde Fantastique",type:"film",emoji:"🌌"},
+  {title:"Secrets de la Ville",type:"serie",emoji:"🌃"},
+  {title:"Les Explorateurs",type:"serie",emoji:"🧭"},
+  {title:"Nouvelle Génération",type:"serie",emoji:"⭐"}
+];
+
+let fav = JSON.parse(
+  localStorage.getItem("streamplus-fav") || "[]"
+);
+
+function cards(items) {
+  if (!items.length) return "<p>Aucun titre.</p>";
+  return '<div class="cards">' + items.map((f) => {
+    const id = films.indexOf(f);
+    return `
+      <div class="card">
+        <div class="poster">${f.emoji}</div>
+        <h3>${f.title}</h3>
+        <button onclick="watch(${id})">▶ Voir</button>
+        <button onclick="favorite(${id})">♡</button>
+      </div>`;
+  }).join("") + "</div>";
+}
+
+function show(page) {
+  let html = "";
+
+  if (page === "accueil") {
+    html = `
+      <div class="hero">
+        <h1>Bienvenue sur StreamPlus</h1>
+        <p>Votre univers de divertissement.</p>
+        <button onclick="show('films')">
+          Explorer les films
+        </button>
+      </div>
+      <section>
+        <h2>À découvrir</h2>
+        ${cards(films)}
+      </section>`;
+  }
+
+  if (page === "films") {
+    html = `<section><h2>Films</h2>
+      ${cards(films.filter(f=>f.type==="film"))}
+      </section>`;
+  }
+
+  if (page === "series") {
+    html = `<section><h2>Séries</h2>
+      ${cards(films.filter(f=>f.type==="serie"))}
+      </section>`;
+  }
+
+  if (page === "favoris") {
+    html = `<section><h2>Ma liste</h2>
+      ${cards(films.filter((f,i)=>fav.includes(i)))}
+      </section>`;
+  }
+
+  if (page === "profils") {
+    html = `
+      <section>
+        <h2>Profils</h2>
+        <div class="cards">
+          <div class="plan">👤 Profil principal</div>
+          <div class="plan">🧒 Profil enfant (démo)</div>
+        </div>
+      </section>`;
+  }
+
+  if (page === "abonnements") {
+    html = `
+      <section>
+        <h2>Abonnements fictifs</h2>
+        <div class="cards">
+          <div class="plan">
+            <h3>Gratuit</h3><h2>Rs 0</h2>
+            <button disabled>Démo</button>
+          </div>
+          <div class="plan">
+            <h3>Premium HD</h3>
+            <h2>Rs 199/mois</h2>
+            <button onclick="alert('Offre fictive')">
+              Découvrir
+            </button>
+          </div>
+          <div class="plan">
+            <h3>Famille</h3>
+            <h2>Rs 349/mois</h2>
+            <button onclick="alert('Offre fictive')">
+              Découvrir
+            </button>
+          </div>
+        </div>
+        <p>Aucun paiement réel.</p>
+      </section>`;
+  }
+
+  document.getElementById("app").innerHTML = html;
+}
+
+function favorite(id) {
+  if (fav.includes(id)) {
+    fav = fav.filter(x=>x!==id);
+  } else {
+    fav.push(id);
+  }
+  localStorage.setItem("streamplus-fav",JSON.stringify(fav));
+  alert("Liste mise à jour !");
+}
+
+function watch(id) {
+  const title = films[id].title;
+  document.getElementById("app").innerHTML = `
+    <section>
+      <h2>${title}</h2>
+      <p>Vidéo libre de démonstration.
+      Ce n'est pas le film annoncé.</p>
+      <video controls playsinline
+        src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4">
+      </video>
+      <p><button onclick="show('accueil')">
+        Retour à l'accueil
+      </button></p>
+    </section>`;
+}
+
+show("accueil");
+</script>
+</body>
 </html>
