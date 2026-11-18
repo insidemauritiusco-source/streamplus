@@ -106,6 +106,25 @@ footer {
   padding: 25px;
   color: #aaa;
 }
+
+/* StreamPlus modern responsive interface */
+header {position:sticky;top:0;z-index:20;box-shadow:0 4px 25px #0007}
+nav {position:sticky;top:66px;z-index:19;scrollbar-width:thin}
+.hero {min-height:300px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;background:radial-gradient(ellipse at 85% 20%,#7331b6 0%,transparent 45%),linear-gradient(115deg,#241039,#080711)}
+.hero p {color:#e0d3ee;max-width:520px;line-height:1.6}
+.hero button {font-weight:bold}
+.cards {grid-template-columns:repeat(auto-fill,minmax(155px,1fr))}
+.card {box-shadow:0 7px 22px #0005;border:1px solid #ffffff12}
+.catalog-poster {height:240px}
+.catalog-info button {margin:4px 0}
+.search-box {display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 22px}
+.search-box input {flex:1;min-width:190px;background:#211631;color:white;border:1px solid #75529a;border-radius:10px;padding:13px;font-size:16px}
+.search-box input:focus {outline:2px solid #b77aff}
+.search-count {color:#c6bad8}
+.player-shell {background:#130e22;border:1px solid #543078;border-radius:15px;padding:15px;margin:15px 0}
+.player-shell video {width:100%;max-height:65vh;object-fit:contain}
+@media(max-width:480px){nav{top:59px}.catalog-poster{height:215px}.cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.catalog-info{padding:9px}.catalog-info a{font-size:12px}.hero{min-height:240px}}
+
 </style>
 </head>
 <body>
@@ -118,6 +137,7 @@ footer {
 <nav>
   <button onclick="show('accueil')">Accueil</button>
   <button onclick="show('films')">Films</button>
+  <button onclick="show('recherche')">🔎 Recherche</button>
   <button onclick="show('nouveautes')">🆕 Nouveautés</button>
   <button onclick="show('populaires')">🔥 À découvrir</button>
   <button onclick="show('series')">Séries</button>
@@ -169,7 +189,8 @@ function show(page) {
     html = `
       <div class="hero">
         <h1>Bienvenue sur StreamPlus</h1>
-        <p>Votre univers de divertissement.</p>
+        <p>Découvrez des films, des séries et des bandes-annonces. Explorez les nouveautés avec un catalogue actualisé lors de vos visites.</p>
+        <button onclick="show('recherche')">🔎 Rechercher un film</button>
         <button onclick="show('films')">
           Explorer les films
         </button>
@@ -183,6 +204,7 @@ function show(page) {
   }
 
   if (page === "nouveautes" || page === "populaires") { renderCatalog(page); return; }
+  if (page === "recherche") { renderSearch(); return; }
 
   if (page === "films") {
     html = `<section><h2>Films</h2>
@@ -242,7 +264,7 @@ function show(page) {
   }
 
   document.getElementById("app").innerHTML = html;
-  if (page === "accueil") loadCatalog().then(() => { const el=document.getElementById("home-catalog"); if(el) el.innerHTML=renderCatalogCards(catalog.slice(0,6)); });
+  if (page === "accueil") loadCatalog().then(() => { const el=document.getElementById("home-catalog"); if(el) el.innerHTML=(catalogError?'<p class="catalog-note">'+escapeHTML(catalogError)+'</p>':"")+renderCatalogCards(catalog.slice(0,6)); });
 }
 
 function favorite(id) {
@@ -256,17 +278,44 @@ function favorite(id) {
 }
 
 function watch(id) {
-  if (!films[id]) return show("accueil");
+  if (!films[id]) return 
+function startCatalogVideo(){
+ const v=document.getElementById("catalog-video");
+ if(!v)return;
+ v.muted=false;
+ v.volume=1;
+ v.play().catch(()=>{const e=document.getElementById("catalog-video-error");if(e)e.textContent="Lecture impossible ici. Utilisez ▶ dans la vidéo ou le lien Apple TV.";});
+}
+async function renderSearch(){
+ currentPage="recherche";
+ document.getElementById("app").innerHTML='<section><h2>🔎 Rechercher des films</h2><p class="catalog-note">Recherche dans le catalogue disponible. Les films complets ne sont pas hébergés sur StreamPlus.</p><div class="search-box"><input id="movie-search" type="search" placeholder="Titre, genre, année…" aria-label="Rechercher des films"><button onclick="filterMovies()">Rechercher</button></div><p class="search-count" id="search-count" role="status">Chargement…</p><div id="catalog-player" hidden></div><div id="search-results"></div></section>';
+ const input=document.getElementById("movie-search");
+ input.addEventListener("input",filterMovies);
+ await loadCatalog();
+ if(currentPage!=="recherche")return;
+ filterMovies();
+}
+function filterMovies(){
+ const input=document.getElementById("movie-search");
+ const target=document.getElementById("search-results");
+ if(!input||!target)return;
+ const q=input.value.trim().toLocaleLowerCase();
+ const found=catalog.filter(m=>[m.title,m.genre,m.release?.slice(0,4)].some(v=>String(v||"").toLocaleLowerCase().includes(q)));
+ document.getElementById("search-count").textContent=found.length+" film(s) trouvé(s)"+(catalogError?" — catalogue en cache ou indisponible":"");
+ target.innerHTML=renderCatalogCards(found.slice(0,60));
+}
+
+show("accueil");
   currentPage = "lecteur";
   const title = films[id].title;
   document.getElementById("app").innerHTML = `
     <section>
       <h2>${title}</h2>
       <p>Extrait vidéo de démonstration avec audio. Ce n'est pas le film ou la série annoncée.</p>
-      <video id="player" controls playsinline preload="metadata">
+      <div class="player-shell"><video id="player" controls playsinline preload="metadata">
         <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
         Votre navigateur ne prend pas en charge la vidéo.
-      </video>
+      </video></div>
       <div class="video-actions">
         <button onclick="startVideo()">▶ Lire avec le son</button>
         <button onclick="toggleMute()">🔊 Activer / couper le son</button>
@@ -275,6 +324,7 @@ function watch(id) {
       <p id="video-status" role="status">Appuyez sur Lire avec le son. Vérifiez aussi le volume multimédia du téléphone.</p>
     </section>`;
   const player = document.getElementById("player");
+  player.addEventListener("playing", () => {document.getElementById("video-status").textContent="Lecture en cours. Utilisez les commandes du lecteur pour le volume et le plein écran.";});
   player.addEventListener("error", () => {
     document.getElementById("video-status").textContent = "Vidéo indisponible. Vérifiez votre connexion Internet.";
   });
@@ -284,7 +334,7 @@ function startVideo() {
   if (!v) return;
   v.muted = false;
   v.volume = 1;
-  v.play().catch(() => {
+  v.play().then(()=>{const status=document.getElementById("video-status");if(status)status.textContent="Lecture démarrée avec le son activé.";}).catch(() => {
     document.getElementById("video-status").textContent = "Lecture bloquée. Appuyez sur ▶ dans le lecteur.";
   });
 }
@@ -356,9 +406,10 @@ function playCatalogPreview(id) {
   const panel=document.getElementById("catalog-player");
   if(!panel) return;
   panel.hidden=false;
-  panel.innerHTML='<h3>'+escapeHTML(movie.title)+'</h3><p>Extrait promotionnel officiel (si disponible dans votre région).</p><video id="catalog-video" controls playsinline preload="metadata" src="'+escapeHTML(movie.preview)+'"></video><div class="video-actions"><button onclick="document.getElementById(\'catalog-video\').play().catch(()=>{})">▶ Lire avec le son</button><button onclick="closeCatalogPreview()">✕ Fermer</button></div><p id="catalog-video-error" role="status"></p>';
+  panel.innerHTML='<div class="player-shell"><h3>'+escapeHTML(movie.title)+'</h3><p>Extrait promotionnel officiel (si disponible dans votre région).</p><video id="catalog-video" controls playsinline preload="metadata" src="'+escapeHTML(movie.preview)+'"></video><div class="video-actions"><button onclick="startCatalogVideo()">▶ Lire avec le son</button><button onclick="closeCatalogPreview()">✕ Fermer</button></div><p id="catalog-video-error" role="status"></p>';
   const v=document.getElementById("catalog-video");
   v.muted=false;
+  v.addEventListener("playing",()=>{document.getElementById("catalog-video-error").textContent="Bande-annonce en lecture.";});
   v.addEventListener("error",()=>{document.getElementById("catalog-video-error").textContent="Cet extrait ne peut pas être lu ici. Essayez le lien Apple TV du film.";});
   panel.scrollIntoView({behavior:"smooth",block:"start"});
 }
