@@ -53,6 +53,9 @@ nav button { white-space: nowrap; }
 .catalog-info p { color:#d0c4e2; font-size:13px; }
 .catalog-info a { display:inline-block; padding:10px; background:#9747ff; color:white; border-radius:8px; text-decoration:none; margin:4px 4px 0 0; }
 .catalog-note { color:#c9b9e3; line-height:1.5; }
+.movie-details { margin:10px 0; color:#ddd0f4; font-size:13px; line-height:1.5; }
+.movie-details summary { cursor:pointer; color:#c39aff; font-weight:bold; }
+.movie-details p { max-height:180px; overflow:auto; }
 button:hover,button:focus-visible { filter: brightness(1.15); outline-offset: 3px; }
 button:disabled { opacity: .5; cursor: not-allowed; }
 .card { transition: transform .2s; }
@@ -296,7 +299,7 @@ function toggleMute() {
    Le classement "À découvrir" est une sélection, pas un classement de ventes. */
 let catalog = [];
 let catalogError = "";
-const CACHE_KEY = "streamplus-catalog-v1";
+const CACHE_KEY = "streamplus-catalog-v2";
 function escapeHTML(s) { return String(s ?? "").replace(/[&<>"']/g, x=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[x])); }
 async function appleSearch(term) {
   const controller=new AbortController();
@@ -325,7 +328,7 @@ async function loadCatalog(force=false) {
     batches.forEach(b=>{ if(b.status==="fulfilled") b.value.forEach(m=>{
       if(m.kind==="feature-movie" && m.trackId && m.trackName && m.trackViewUrl && m.artworkUrl100) unique.set(m.trackId,{
         id:m.trackId,title:m.trackName,release:m.releaseDate||"",genre:m.primaryGenreName||"Film",
-        poster:m.artworkUrl100,link:m.trackViewUrl,preview:m.previewUrl||""
+        poster:m.artworkUrl100,link:m.trackViewUrl,preview:m.previewUrl||"",description:m.longDescription||m.shortDescription||"",duration:m.trackTimeMillis?Math.round(m.trackTimeMillis/60000):null,rating:m.contentAdvisoryRating||""
       });
     }); });
     if(!unique.size) throw new Error("Aucun résultat");
@@ -344,7 +347,7 @@ function renderCatalogCards(items) {
     const poster=escapeHTML(m.poster.replace("100x100bb","600x900bb"));
     const link=escapeHTML(m.link);
     const preview=m.preview ? '<button onclick="playCatalogPreview('+Number(m.id)+')">▶ Voir la bande-annonce</button>' : '<span class="catalog-note">Extrait indisponible</span>';
-    return '<article class="card"><img class="catalog-poster" loading="lazy" src="'+poster+'" alt="Affiche de '+escapeHTML(m.title)+'"><div class="catalog-info"><h3>'+escapeHTML(m.title)+'</h3><p>'+escapeHTML(m.release?.slice(0,4)||"Date inconnue")+' · '+escapeHTML(m.genre)+'</p><a href="'+link+'" target="_blank" rel="noopener noreferrer">Voir sur Apple TV</a>'+preview+'</div></article>';
+    return '<article class="card"><img class="catalog-poster" loading="lazy" src="'+poster+'" alt="Affiche de '+escapeHTML(m.title)+'"><div class="catalog-info"><h3>'+escapeHTML(m.title)+'</h3><p>'+escapeHTML(m.release?.slice(0,4)||"Date inconnue")+' · '+escapeHTML(m.genre)+(m.duration?' · '+m.duration+' min':'')+(m.rating?' · '+escapeHTML(m.rating):'')+'</p>'+(m.description?'<details class="movie-details"><summary>Résumé du film</summary><p>'+escapeHTML(m.description)+'</p></details>':'')+'<a href="'+link+'" target="_blank" rel="noopener noreferrer">Voir sur Apple TV</a>'+preview+'</div></article>';
   }).join("")+'</div>';
 }
 function playCatalogPreview(id) {
