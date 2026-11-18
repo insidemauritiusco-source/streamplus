@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -135,7 +135,7 @@ nav {position:sticky;top:66px;z-index:19;scrollbar-width:thin}
 </header>
 
 <nav>
-  <button onclick="show('accueil')">Accueil</button>
+  <button onclick="show('accueil')">Home</button>
   <button onclick="show('films')">Films</button>
   <button onclick="show('recherche')">🔎 Recherche</button>
   <button onclick="show('bollywood')">🇮🇳 Bollywood</button>
@@ -143,10 +143,10 @@ nav {position:sticky;top:66px;z-index:19;scrollbar-width:thin}
   <button onclick="show('seriespop')">📺 Séries populaires</button>
   <button onclick="show('nouveautes')">🆕 Nouveautés</button>
   <button onclick="show('populaires')">🔥 À découvrir</button>
-  <button onclick="show('series')">Séries</button>
-  <button onclick="show('favoris')">Ma liste</button>
-  <button onclick="show('profils')">Profils</button>
-  <button onclick="show('abonnements')">Abonnements</button>
+  <button onclick="show('series')">Series</button>
+  <button onclick="show('favoris')">My List</button>
+  <button onclick="show('profils')">Profiles</button>
+  <button onclick="show('abonnements')">Subscriptions</button>
 </nav>
 
 <main id="app"></main>
@@ -183,7 +183,7 @@ function toggleCatalogFavorite(id) {
  else document.querySelectorAll('[data-fav-id]').forEach(btn=>{
   if(btn.getAttribute("data-fav-id")===key) {
    const active=!!catalogFav[key];
-   btn.textContent=active?"♥ Dans ma liste":"♡ Ajouter à ma liste";
+   btn.textContent=active?"♥ In My List":"♡ Add to My List";
    btn.setAttribute("aria-pressed",String(active));
   }
  });
@@ -191,7 +191,7 @@ function toggleCatalogFavorite(id) {
 let currentPage = "accueil";
 
 function cards(items) {
-  if (!items.length) return "<p>Aucun titre.</p>";
+  if (!items.length) return "<p>No titles found.</p>";
   return '<div class="cards">' + items.map((f) => {
     const id = films.indexOf(f);
     return `
@@ -199,7 +199,7 @@ function cards(items) {
         <div class="poster">${f.emoji}</div>
         <h3>${f.title}</h3>
         <button onclick="watch(${id})">▶ Voir</button>
-        <button aria-label="Ajouter ou retirer ${f.title} de ma liste" onclick="favorite(${id})">${fav.includes(id) ? "♥ Dans ma liste" : "♡ Ma liste"}</button>
+        <button aria-label="Ajouter ou retirer ${f.title} de ma liste" onclick="favorite(${id})">${fav.includes(id) ? "♥ In My List" : "♡ Ma liste"}</button>
       </div>`;
   }).join("") + "</div>";
 }
@@ -211,17 +211,17 @@ function show(page) {
   if (page === "accueil") {
     html = `
       <div class="hero">
-        <h1>Bienvenue sur StreamPlus</h1>
-        <p>Découvrez des films, des séries et des bandes-annonces. Explorez les nouveautés avec un catalogue actualisé lors de vos visites.</p>
-        <button onclick="show('recherche')">🔎 Rechercher un film</button>
+        <h1>Welcome to StreamPlus</h1>
+        <p>Discover movies, series and trailers. Explore new releases with a catalog refreshed when you visit.</p>
+        <button onclick="show('recherche')">🔎 Search movies</button>
         <button onclick="show('films')">
-          Explorer les films
+          Explore movies
         </button>
       </div>
       <section>
-        <h2>🆕 Nouveaux films</h2><div id="catalog-player" hidden></div><div id="home-catalog"><p>Chargement du catalogue…</p></div>
-        <button onclick="show('nouveautes')">Voir toutes les nouveautés</button>
-        <h2>Films de démonstration</h2>
+        <h2>🆕 New Movies</h2><div id="catalog-player" hidden></div><div id="home-catalog"><p>Loading catalog…</p></div>
+        <button onclick="show('nouveautes')">See all new releases</button>
+        <h2>Demo Movies</h2>
         ${cards(films)}
       </section>`;
   }
@@ -237,22 +237,22 @@ function show(page) {
   }
 
   if (page === "series") {
-    html = `<section><h2>Séries</h2>
+    html = `<section><h2>Series</h2>
       ${cards(films.filter(f=>f.type==="serie"))}
       </section>`;
   }
 
   if (page === "favoris") {
-    html = `<section><h2>❤️ Ma liste</h2><p class="catalog-note">Films enregistrés sur cet appareil.</p><div id="catalog-player" hidden></div><div id="saved-catalog">${renderCatalogCards(Object.values(catalogFav))}</div><h2>Films de démonstration</h2>${cards(films.filter((f,i)=>fav.includes(i)))}</section>`;
+    html = `<section><h2>❤️ Ma liste</h2><p class="catalog-note">Movies saved on this device.</p><div id="catalog-player" hidden></div><div id="saved-catalog">${renderCatalogCards(Object.values(catalogFav))}</div><h2>Demo Movies</h2>${cards(films.filter((f,i)=>fav.includes(i)))}</section>`;
   }
 
   if (page === "profils") {
     html = `
       <section>
-        <h2>Profils</h2>
+        <h2>Profiles</h2>
         <div class="cards">
-          <div class="plan">👤 Profil principal</div>
-          <div class="plan">🧒 Profil enfant (démo)</div>
+          <div class="plan">👤 Main Profile</div>
+          <div class="plan">🧒 Kids Profile (demo)</div>
         </div>
       </section>`;
   }
@@ -260,28 +260,28 @@ function show(page) {
   if (page === "abonnements") {
     html = `
       <section>
-        <h2>Abonnements fictifs</h2>
+        <h2>Demo Subscription Plans</h2>
         <div class="cards">
           <div class="plan">
-            <h3>Gratuit</h3><h2>Rs 0</h2>
+            <h3>Free</h3><h2>Rs 0</h2>
             <button disabled>Démo</button>
           </div>
           <div class="plan">
             <h3>Premium HD</h3>
             <h2>Rs 199/mois</h2>
             <button onclick="alert('Offre fictive')">
-              Découvrir
+              Explore
             </button>
           </div>
           <div class="plan">
-            <h3>Famille</h3>
+            <h3>Family</h3>
             <h2>Rs 349/mois</h2>
             <button onclick="alert('Offre fictive')">
-              Découvrir
+              Explore
             </button>
           </div>
         </div>
-        <p>Aucun paiement réel.</p>
+        <p>No real payments.</p>
       </section>`;
   }
 
@@ -300,9 +300,7 @@ function favorite(id) {
 }
 
 function watch(id) {
-  if (!films[id]) return 
-
-show("accueil");
+  if (!films[id]) return show("accueil");
   currentPage = "lecteur";
   const title = films[id].title;
   document.getElementById("app").innerHTML = `
@@ -314,16 +312,16 @@ show("accueil");
         Votre navigateur ne prend pas en charge la vidéo.
       </video></div>
       <div class="video-actions">
-        <button onclick="startVideo()">▶ Lire avec le son</button>
-        <button onclick="toggleMute()">🔊 Activer / couper le son</button>
+        <button onclick="startVideo()">▶ Play with Sound</button>
+        <button onclick="toggleMute()">🔊 Toggle Sound</button>
         <button onclick="show('accueil')">← Accueil</button>
       </div>
-      <p id="video-status" role="status">Appuyez sur Lire avec le son. Vérifiez aussi le volume multimédia du téléphone.</p>
+      <p id="video-status" role="status">Appuyez sur Play with Sound. Vérifiez aussi le volume multimédia du téléphone.</p>
     </section>`;
   const player = document.getElementById("player");
-  player.addEventListener("playing", () => {document.getElementById("video-status").textContent="Lecture en cours. Utilisez les commandes du lecteur pour le volume et le plein écran.";});
+  player.addEventListener("playing", () => {document.getElementById("video-status").textContent="Playing. Utilisez les commandes du lecteur pour le volume et le plein écran.";});
   player.addEventListener("error", () => {
-    document.getElementById("video-status").textContent = "Vidéo indisponible. Vérifiez votre connexion Internet.";
+    document.getElementById("video-status").textContent = "Video unavailable. Vérifiez votre connexion Internet.";
   });
 }
 function startVideo() {
@@ -332,14 +330,14 @@ function startVideo() {
   v.muted = false;
   v.volume = 1;
   v.play().then(()=>{const status=document.getElementById("video-status");if(status)status.textContent="Lecture démarrée avec le son activé.";}).catch(() => {
-    document.getElementById("video-status").textContent = "Lecture bloquée. Appuyez sur ▶ dans le lecteur.";
+    document.getElementById("video-status").textContent = "Playback blocked. Appuyez sur ▶ dans le lecteur.";
   });
 }
 function toggleMute() {
   const v = document.getElementById("player");
   if (!v) return;
   v.muted = !v.muted;
-  document.getElementById("video-status").textContent = v.muted ? "Son coupé" : "Son activé. Montez le volume multimédia si nécessaire.";
+  document.getElementById("video-status").textContent = v.muted ? "Sound off" : "Sound on. Montez le volume multimédia si nécessaire.";
 }
 
 /* Catalogue Apple Store: métadonnées renouvelées au maximum une fois par jour.
@@ -389,12 +387,12 @@ async function loadCatalog(force=false) {
   return catalog;
 }
 function renderCatalogCards(items) {
-  if(!items.length) return '<p>Aucun film enregistré pour le moment. Ouvrez Nouveautés et appuyez sur ♡ Ajouter à ma liste.</p>';
+  if(!items.length) return '<p>Aucun film enregistré pour le moment. Ouvrez Nouveautés et appuyez sur ♡ Add to My List.</p>';
   return '<div class="cards">'+items.map(m=>{
     const poster=escapeHTML(m.poster.replace("100x100bb","600x900bb"));
     const link=escapeHTML(m.link);
-    const preview=m.preview ? '<button onclick="playCatalogPreview('+Number(m.id)+')">▶ Voir la bande-annonce</button>' : '<span class="catalog-note">Extrait indisponible</span>';
-    return '<article class="card"><img class="catalog-poster" loading="lazy" src="'+poster+'" alt="Affiche de '+escapeHTML(m.title)+'"><div class="catalog-info"><h3>'+escapeHTML(m.title)+'</h3><p>'+escapeHTML(m.release?.slice(0,4)||"Date inconnue")+' · '+escapeHTML(m.genre)+(m.duration?' · '+m.duration+' min':'')+(m.rating?' · '+escapeHTML(m.rating):'')+'</p>'+(m.description?'<details class="movie-details"><summary>Résumé du film</summary><p>'+escapeHTML(m.description)+'</p></details>':'')+'<button type="button" data-fav-id="'+Number(m.id)+'" aria-pressed="'+String(!!catalogFav[String(m.id)])+'" onclick="toggleCatalogFavorite('+Number(m.id)+')">'+(catalogFav[String(m.id)]?'♥ Dans ma liste':'♡ Ajouter à ma liste')+'</button><a href="'+link+'" target="_blank" rel="noopener noreferrer">Voir sur Apple TV</a>'+preview+'</div></article>';
+    const preview=m.preview ? '<button onclick="playCatalogPreview('+Number(m.id)+')">▶ Watch Trailer</button>' : '<span class="catalog-note">Trailer unavailable</span>';
+    return '<article class="card"><img class="catalog-poster" loading="lazy" src="'+poster+'" alt="Affiche de '+escapeHTML(m.title)+'"><div class="catalog-info"><h3>'+escapeHTML(m.title)+'</h3><p>'+escapeHTML(m.release?.slice(0,4)||"Unknown date")+' · '+escapeHTML(m.genre)+(m.duration?' · '+m.duration+' min':'')+(m.rating?' · '+escapeHTML(m.rating):'')+'</p>'+(m.description?'<details class="movie-details"><summary>Movie Overview</summary><p>'+escapeHTML(m.description)+'</p></details>':'')+'<button type="button" data-fav-id="'+Number(m.id)+'" aria-pressed="'+String(!!catalogFav[String(m.id)])+'" onclick="toggleCatalogFavorite('+Number(m.id)+')">'+(catalogFav[String(m.id)]?'♥ In My List':'♡ Add to My List')+'</button><a href="'+link+'" target="_blank" rel="noopener noreferrer">View on Apple TV</a>'+preview+'</div></article>';
   }).join("")+'</div>';
 }
 function playCatalogPreview(id) {
@@ -403,7 +401,7 @@ function playCatalogPreview(id) {
   const panel=document.getElementById("catalog-player");
   if(!panel) return;
   panel.hidden=false;
-  panel.innerHTML='<div class="player-shell"><h3>'+escapeHTML(movie.title)+'</h3><p>Extrait promotionnel officiel (si disponible dans votre région).</p><video id="catalog-video" controls playsinline preload="metadata" src="'+escapeHTML(movie.preview)+'"></video><div class="video-actions"><button onclick="startCatalogVideo()">▶ Lire avec le son</button><button onclick="closeCatalogPreview()">✕ Fermer</button></div><p id="catalog-video-error" role="status"></p>';
+  panel.innerHTML='<div class="player-shell"><h3>'+escapeHTML(movie.title)+'</h3><p>Official promotional preview (si disponible dans votre région).</p><video id="catalog-video" controls playsinline preload="metadata" src="'+escapeHTML(movie.preview)+'"></video><div class="video-actions"><button onclick="startCatalogVideo()">▶ Play with Sound</button><button onclick="closeCatalogPreview()">✕ Close</button></div><p id="catalog-video-error" role="status"></p>';
   const v=document.getElementById("catalog-video");
   v.muted=false;
   v.addEventListener("playing",()=>{document.getElementById("catalog-video-error").textContent="Bande-annonce en lecture.";});
@@ -415,8 +413,8 @@ function closeCatalogPreview() {
   if(panel) {panel.innerHTML="";panel.hidden=true;}
 }
 async function renderCatalog(page,force=false) {
-  const title=page==="nouveautes"?"🆕 Films récents":"🔥 Films à découvrir";
-  document.getElementById("app").innerHTML='<section><h2>'+title+'</h2><p class="catalog-note">Catalogue issu de l’Apple Store, mis à jour au plus une fois par jour lors des visites. Disponibilité variable selon le pays. Les extraits sont promotionnels et les films complets ne sont pas hébergés ici.</p><button onclick="renderCatalog(\''+page+'\',true)">↻ Actualiser maintenant</button><div id="catalog-player" hidden></div><div id="catalog-results"><p>Chargement…</p></div></section>';
+  const title=page==="nouveautes"?"🆕 Recent Movies":"🔥 Movies to Discover";
+  document.getElementById("app").innerHTML='<section><h2>'+title+'</h2><p class="catalog-note">Catalogue issu de l’Apple Store, mis à jour au plus une fois par jour lors des visites. Disponibilité variable selon le pays. Les extraits sont promotionnels et les films complets ne sont pas hébergés ici.</p><button onclick="renderCatalog(\''+page+'\',true)">↻ Refresh Now</button><div id="catalog-player" hidden></div><div id="catalog-results"><p>Loading…</p></div></section>';
   await loadCatalog(force);
   if(currentPage!==page) return;
   const items=page==="nouveautes"?catalog.filter(m=>m.release && new Date(m.release)<=new Date()).slice(0,36):catalog.slice(20,56);
@@ -432,7 +430,7 @@ function startCatalogVideo(){
 }
 async function renderSearch(){
  currentPage="recherche";
- document.getElementById("app").innerHTML='<section><h2>🔎 Rechercher des films</h2><p class="catalog-note">Recherche dans le catalogue disponible. Les films complets ne sont pas hébergés sur StreamPlus.</p><div class="search-box"><input id="movie-search" type="search" placeholder="Titre, genre, année…" aria-label="Rechercher des films"><button onclick="filterMovies()">Rechercher</button></div><p class="search-count" id="search-count" role="status">Chargement…</p><div id="catalog-player" hidden></div><div id="search-results"></div></section>';
+ document.getElementById("app").innerHTML='<section><h2>🔎 Search Movies</h2><p class="catalog-note">Recherche dans le catalogue disponible. Les films complets ne sont pas hébergés sur StreamPlus.</p><div class="search-box"><input id="movie-search" type="search" placeholder="Title, genre, year…" aria-label="Search Movies"><button onclick="filterMovies()">Search</button></div><p class="search-count" id="search-count" role="status">Loading…</p><div id="catalog-player" hidden></div><div id="search-results"></div></section>';
  const input=document.getElementById("movie-search");
  input.addEventListener("input",filterMovies);
  await loadCatalog();
@@ -445,7 +443,7 @@ function filterMovies(){
  if(!input||!target)return;
  const q=input.value.trim().toLocaleLowerCase();
  const found=catalog.filter(m=>[m.title,m.genre,m.release?.slice(0,4)].some(v=>String(v||"").toLocaleLowerCase().includes(q)));
- document.getElementById("search-count").textContent=found.length+" film(s) trouvé(s)"+(catalogError?" — catalogue en cache ou indisponible":"");
+ document.getElementById("search-count").textContent=found.length+" movie(s) found"+(catalogError?" — cached catalog or temporarily unavailable":"");
  target.innerHTML=renderCatalogCards(found.slice(0,60));
 }
 
@@ -480,14 +478,14 @@ async function fetchGenreItems(page,force=false){
 async function renderGenrePage(page,force=false){
  currentPage=page;
  const names={bollywood:"🇮🇳 Films Bollywood",hollywood:"🎥 Films Hollywood",seriespop:"📺 Séries à découvrir"};
- document.getElementById("app").innerHTML='<section><h2>'+names[page]+'</h2><p class="catalog-note">Sélection de résultats Apple Store. Les catégories sont indicatives, et les bandes-annonces ne sont pas toujours disponibles.</p><button onclick="renderGenrePage(\''+page+'\',true)">↻ Actualiser</button><div id="catalog-player" hidden></div><div id="genre-results" role="status">Chargement…</div></section>';
+ document.getElementById("app").innerHTML='<section><h2>'+names[page]+'</h2><p class="catalog-note">Sélection de résultats Apple Store. Les catégories sont indicatives, et les bandes-annonces ne sont pas toujours disponibles.</p><button onclick="renderGenrePage(\''+page+'\',true)">↻ Actualiser</button><div id="catalog-player" hidden></div><div id="genre-results" role="status">Loading…</div></section>';
  try{
   const items=await fetchGenreItems(page,force);
   if(currentPage!==page)return;
   genreMemory[page]=items;
   const target=document.getElementById("genre-results");
   if(!target)return;
-  target.innerHTML=items.length?renderCatalogCards(items.slice(0,48)):'<p>Aucun résultat disponible. Réessayez plus tard.</p>';
+  target.innerHTML=items.length?renderCatalogCards(items.slice(0,48)):'<p>No results available. Try again later.</p>';
  }catch(e){const target=document.getElementById("genre-results");if(target)target.textContent="Catalogue temporairement indisponible. Réessayez.";}
 }
 
