@@ -160,7 +160,7 @@ button.secondary{background:#ffffff18;border:1px solid #a57bc9}
 
 <nav>
   <button onclick="show('accueil')">Home</button>
-  <button onclick="show('films')">Films</button>
+  <button onclick="show('films')">Movies</button>
   <button onclick="show('recherche')">🔎 Search</button>
   <button onclick="show('bollywood')">🇮🇳 Bollywood</button>
   <button onclick="show('hollywood')">🎥 Hollywood</button>
@@ -252,7 +252,7 @@ function show(page) {
   if (["bollywood","hollywood","seriespop"].includes(page)) { renderGenrePage(page); return; }
 
   if (page === "films") {
-    html = `<section><h2>Films</h2>
+    html = `<section><h2>Movies</h2>
       ${cards(films.filter(f=>f.type==="film"))}
       </section>`;
   }
@@ -264,7 +264,7 @@ function show(page) {
   }
 
   if (page === "favoris") {
-    html = `<section><h2>❤️ Ma liste</h2><p class="catalog-note">Movies saved on this device.</p><div id="catalog-player" hidden></div><div id="saved-catalog">${renderCatalogCards(Object.values(catalogFav))}</div><h2>Demo Movies</h2>${cards(films.filter((f,i)=>fav.includes(i)))}</section>`;
+    html = `<section><h2>❤️ My List</h2><p class="catalog-note">Movies saved on this device.</p><div id="catalog-player" hidden></div><div id="saved-catalog">${renderCatalogCards(Object.values(catalogFav))}</div><h2>Demo Movies</h2>${cards(films.filter((f,i)=>fav.includes(i)))}</section>`;
   }
 
   if (page === "profils") {
@@ -372,6 +372,22 @@ function toggleMute() {
 
 /* Catalogue Apple Store: métadonnées renouvelées au maximum une fois par jour.
    Le classement "À découvrir" est une sélection, pas un classement de ventes. */
+// Built-in offline-safe discovery selection. These are real film titles, not live listings.
+const FALLBACK_TITLES=[
+ ["Dune: Part Two",2024,"Science Fiction"],["Inside Out 2",2024,"Animation"],["Wicked",2024,"Musical"],["The Wild Robot",2024,"Animation"],["Deadpool & Wolverine",2024,"Action"],["Moana 2",2024,"Animation"],["Gladiator II",2024,"Action"],["Furiosa: A Mad Max Saga",2024,"Action"],["The Substance",2024,"Horror"],["A Quiet Place: Day One",2024,"Thriller"],["Kung Fu Panda 4",2024,"Animation"],["Beetlejuice Beetlejuice",2024,"Comedy"]
+];
+function fallbackPoster(title){
+ const words=title.replace(/&/g,"and");
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" width="400" height="600" viewBox="0 0 400 600"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#51217d"/><stop offset="1" stop-color="#100a21"/></linearGradient></defs><rect width="400" height="600" fill="url(#g)"/><circle cx="300" cy="160" r="140" fill="#9b5cff" opacity=".2"/><text x="200" y="265" text-anchor="middle" font-size="90" fill="#fff">▶</text><text x="200" y="390" text-anchor="middle" font-family="Arial" font-size="25" fill="white">STREAMPLUS</text><text x="200" y="435" text-anchor="middle" font-family="Arial" font-size="17" fill="#d6baff">DISCOVERY PICK</text></svg>';
+ return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
+}
+const FALLBACK_CATALOG=FALLBACK_TITLES.map(([title,year,genre],index)=>({
+ id:-(index+1),title,release:year+"-01-01",genre,poster:fallbackPoster(title),
+ link:"https://tv.apple.com/search?term="+encodeURIComponent(title),preview:"",
+ description:"Curated discovery title. Open Apple TV to check availability in your region.",
+ fallback:true
+}));
+
 let catalog = [];
 let catalogError = "";
 const CACHE_KEY = "streamplus-catalog-v3";
@@ -422,6 +438,7 @@ async function loadCatalog(force=false) {
   } catch(e) {
     catalogError="Unable to refresh movies. Check your internet connection and tap Refresh Now.";
     try { const old=JSON.parse(localStorage.getItem(CACHE_KEY)||localStorage.getItem(LEGACY_CACHE_KEY)||"null"); catalog=old?.items||[]; } catch(e) {}
+    if(!catalog.length){catalog=FALLBACK_CATALOG;catalogError="Showing built-in movie picks. Live listings are temporarily unavailable; use Refresh Now to retry.";}
   }
   return catalog;
 }
@@ -431,7 +448,7 @@ function renderCatalogCards(items) {
     const poster=escapeHTML(String(m.poster||"").replace("100x100bb","600x900bb"));
     const link=escapeHTML(m.link);
     const preview=m.preview ? '<button onclick="playCatalogPreview('+Number(m.id)+')">▶ Watch Trailer</button>' : '<span class="catalog-note">Trailer unavailable</span>';
-    return '<article class="card"><img class="catalog-poster" loading="lazy" src="'+poster+'" alt="Poster for '+escapeHTML(m.title)+'"><div class="catalog-info"><h3>'+escapeHTML(m.title)+'</h3><p>'+escapeHTML(m.release?.slice(0,4)||"Unknown date")+' · '+escapeHTML(m.genre)+(m.duration?' · '+m.duration+' min':'')+(m.rating?' · '+escapeHTML(m.rating):'')+'</p>'+(m.description?'<details class="movie-details"><summary>Movie Overview</summary><p>'+escapeHTML(m.description)+'</p></details>':'')+'<button type="button" data-fav-id="'+Number(m.id)+'" aria-pressed="'+String(!!catalogFav[String(m.id)])+'" onclick="toggleCatalogFavorite('+Number(m.id)+')">'+(catalogFav[String(m.id)]?'♥ In My List':'♡ Add to My List')+'</button><a href="'+link+'" target="_blank" rel="noopener noreferrer">View on Apple TV</a>'+preview+'</div></article>';
+    return '<article class="card"><img class="catalog-poster" loading="lazy" src="'+poster+'" alt="Poster for '+escapeHTML(m.title)+'"><div class="catalog-info"><h3>'+escapeHTML(m.title)+'</h3><p>'+escapeHTML(m.release?.slice(0,4)||"Unknown date")+' · '+escapeHTML(m.genre)+(m.duration?' · '+m.duration+' min':'')+(m.rating?' · '+escapeHTML(m.rating):'')+'</p>'+(m.description?'<details class="movie-details"><summary>Movie Overview</summary><p>'+escapeHTML(m.description)+'</p></details>':'')+'<button type="button" data-fav-id="'+Number(m.id)+'" aria-pressed="'+String(!!catalogFav[String(m.id)])+'" onclick="toggleCatalogFavorite('+Number(m.id)+')">'+(catalogFav[String(m.id)]?'♥ In My List':'♡ Add to My List')+'</button><a href="'+link+'" target="_blank" rel="noopener noreferrer">'+(m.fallback?"Search Apple TV":"View on Apple TV")+"</a>"+preview+'</div></article>';
   }).join("")+'</div>';
 }
 function playCatalogPreview(id) {
@@ -456,7 +473,7 @@ async function renderCatalog(page,force=false) {
   document.getElementById("app").innerHTML='<section><h2>'+title+'</h2><p class="catalog-note">Movie discovery via Apple Store listings, refreshed when visited (up to once daily). Trending Picks are curated selections, not verified popularity rankings. Trailer availability varies by region. No full movies are hosted here.</p><button onclick="renderCatalog(\''+page+'\',true)">↻ Refresh Now</button><div id="catalog-player" hidden></div><div id="catalog-results"><p>Loading…</p></div></section>';
   await loadCatalog(force);
   if(currentPage!==page) return;
-  const items=page==="nouveautes"?catalog.filter(m=>m.release && new Date(m.release)<=new Date()).slice(0,36):catalog.slice(20,56);
+  const items=page==="nouveautes"?catalog.filter(m=>m.release && new Date(m.release)<=new Date()).slice(0,36):(catalog.length<=20?catalog.slice(0,36):catalog.slice(20,56));
   document.getElementById("catalog-results").innerHTML=(catalogError?'<p role="status">'+escapeHTML(catalogError)+'</p>':'')+renderCatalogCards(items.length?items:catalog.slice(0,36));
 }
 
