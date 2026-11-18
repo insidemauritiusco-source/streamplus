@@ -130,24 +130,43 @@ nav {position:sticky;top:66px;z-index:19;scrollbar-width:thin}
 .player-shell video {width:100%;max-height:65vh;object-fit:contain}
 @media(max-width:480px){nav{top:59px}.catalog-poster{height:215px}.cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.catalog-info{padding:9px}.catalog-info a{font-size:12px}.hero{min-height:240px}}
 
+
+/* StreamPlus V2 */
+.version-tag{font-size:11px;letter-spacing:1.2px;color:#d8baff;border:1px solid #67429a;padding:8px 10px;border-radius:30px}
+nav button{background:transparent;border:1px solid transparent;color:#e5daf3;font-weight:600}
+nav button:hover,nav button:focus-visible{background:#40205f;border-color:#8856bb}
+.hero-v2{min-height:390px;display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:18px;padding:54px clamp(20px,5vw,85px);background:radial-gradient(ellipse at 78% 35%,#7133ac77,transparent 52%),linear-gradient(110deg,#12091f,#25113e 62%,#100918)}
+.hero-copy{max-width:650px;position:relative;z-index:1}
+.hero-v2 h1{font-size:clamp(30px,5vw,60px);line-height:1.07;margin:14px 0 18px;letter-spacing:-1.4px}
+.eyebrow{color:#d6a7ff;font-size:12px;font-weight:bold;letter-spacing:1.8px}
+.hero-buttons{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px}
+button.secondary{background:#ffffff18;border:1px solid #a57bc9}
+#hero-art{font-size:clamp(95px,15vw,220px);filter:drop-shadow(0 15px 38px #7b2abf);transform:rotate(-12deg)}
+.home-sections{max-width:1500px;margin:auto}
+.section-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:22px}
+.text-button{background:transparent;color:#cf9bff;font-weight:bold}
+.catalog-info button{padding:9px 11px;font-size:12px}
+.catalog-info a{font-size:12px}
+@media(max-width:650px){.hero-v2{min-height:300px;padding:34px 18px}.hero-v2 h1{font-size:34px}#hero-art{display:none}.section-heading h2{font-size:20px}}
+
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">▶ StreamPlus</div>
-  <button id="install-app" type="button" hidden>⬇ Install App</button><span>PROTOTYPE</span>
+  <button id="install-app" type="button" hidden>⬇ Install App</button><span class="version-tag">V2 · PREVIEW</span>
 </header>
 
 <nav>
   <button onclick="show('accueil')">Home</button>
   <button onclick="show('films')">Films</button>
-  <button onclick="show('recherche')">🔎 Recherche</button>
+  <button onclick="show('recherche')">🔎 Search</button>
   <button onclick="show('bollywood')">🇮🇳 Bollywood</button>
   <button onclick="show('hollywood')">🎥 Hollywood</button>
-  <button onclick="show('seriespop')">📺 Séries populaires</button>
-  <button onclick="show('nouveautes')">🆕 Nouveautés</button>
-  <button onclick="show('populaires')">🔥 À découvrir</button>
+  <button onclick="show('seriespop')">📺 Popular Series</button>
+  <button onclick="show('nouveautes')">🆕 New Releases</button>
+  <button onclick="show('populaires')">🔥 Trending Picks</button>
   <button onclick="show('series')">Series</button>
   <button onclick="show('favoris')">My List</button>
   <button onclick="show('profils')">Profiles</button>
@@ -157,7 +176,7 @@ nav {position:sticky;top:66px;z-index:19;scrollbar-width:thin}
 <main id="app"></main>
 
 <footer>
-  StreamPlus © 2026 — Démonstration
+  StreamPlus © 2026 — Preview · Legal trailers only
 </footer>
 
 <script>
@@ -179,7 +198,7 @@ function toggleCatalogFavorite(id) {
  const key=String(id);
  if(catalogFav[key]) delete catalogFav[key];
  else {
-  const m=catalog.find(x=>String(x.id)===key);
+  const m=catalog.find(x=>String(x.id)===key)||Object.values(genreMemory).flat().find(x=>String(x.id)===key);
   if(!m)return;
   catalogFav[key]=m;
  }
@@ -203,8 +222,8 @@ function cards(items) {
       <div class="card">
         <div class="poster">${f.emoji}</div>
         <h3>${f.title}</h3>
-        <button onclick="watch(${id})">▶ Voir</button>
-        <button aria-label="Ajouter ou retirer ${f.title} de ma liste" onclick="favorite(${id})">${fav.includes(id) ? "♥ In My List" : "♡ Ma liste"}</button>
+        <button onclick="watch(${id})">▶ Play Demo</button>
+        <button aria-label="Ajouter ou retirer ${f.title} de ma liste" onclick="favorite(${id})">${fav.includes(id) ? "♥ In My List" : "♡ My List"}</button>
       </div>`;
   }).join("") + "</div>";
 }
@@ -215,19 +234,16 @@ function show(page) {
 
   if (page === "accueil") {
     html = `
-      <div class="hero">
-        <h1>Welcome to StreamPlus</h1>
-        <p>Discover movies, series and trailers. Explore new releases with a catalog refreshed when you visit.</p>
-        <button onclick="show('recherche')">🔎 Search movies</button>
-        <button onclick="show('films')">
-          Explore movies
-        </button>
+      <div class="hero hero-v2">
+        <div class="hero-copy"><span class="eyebrow">STREAMPLUS ORIGINAL EXPERIENCE · V2</span><h1>Your next movie night starts here.</h1>
+        <p>Explore new releases, curated movie picks and official trailers. Save favorites in My List.</p>
+        <div class="hero-buttons"><button onclick="show('nouveautes')">▶ Explore New Releases</button><button class="secondary" onclick="show('recherche')">🔎 Search Movies</button></div></div>
+        <div id="hero-art" aria-hidden="true">🎬</div>
       </div>
-      <section>
-        <h2>🆕 New Movies</h2><div id="catalog-player" hidden></div><div id="home-catalog"><p>Loading catalog…</p></div>
-        <button onclick="show('nouveautes')">See all new releases</button>
-        <h2>Demo Movies</h2>
-        ${cards(films)}
+      <section class="home-sections"><div id="catalog-player" hidden></div>
+        <div class="section-heading"><h2>🆕 Latest Releases</h2><button class="text-button" onclick="show('nouveautes')">See All →</button></div><div id="home-catalog"><p>Loading movies…</p></div>
+        <div class="section-heading"><h2>🔥 Trending Picks</h2><button class="text-button" onclick="show('populaires')">Explore →</button></div><div id="home-trending"><p>Loading picks…</p></div>
+        <div class="section-heading"><h2>❤️ My List</h2><button class="text-button" onclick="show('favoris')">View My List →</button></div><div id="home-favorites"></div>
       </section>`;
   }
 
@@ -291,7 +307,16 @@ function show(page) {
   }
 
   document.getElementById("app").innerHTML = html;
-  if (page === "accueil") loadCatalog().then(() => { const el=document.getElementById("home-catalog"); if(el) el.innerHTML=(catalogError?'<p class="catalog-note">'+escapeHTML(catalogError)+'</p>':"")+renderCatalogCards(catalog.slice(0,6)); });
+  if (page === "accueil") {
+    const favBox=document.getElementById("home-favorites");
+    if(favBox)favBox.innerHTML=Object.keys(catalogFav).length?renderCatalogCards(Object.values(catalogFav).slice(0,6)):'<p class="catalog-note">Your saved movies will appear here. Browse New Releases to add favorites.</p>';
+    loadCatalog().then(()=>{
+      if(currentPage!=="accueil")return;
+      const latest=document.getElementById("home-catalog"),trending=document.getElementById("home-trending");
+      if(latest)latest.innerHTML=(catalogError?'<p class="catalog-note">'+escapeHTML(catalogError)+'</p>':"")+renderCatalogCards(catalog.filter(m=>!m.release||new Date(m.release)<=new Date()).slice(0,8));
+      if(trending)trending.innerHTML=renderCatalogCards(catalog.slice(20,28));
+    });
+  }
 }
 
 function favorite(id) {
@@ -392,25 +417,25 @@ async function loadCatalog(force=false) {
   return catalog;
 }
 function renderCatalogCards(items) {
-  if(!items.length) return '<p>Aucun film enregistré pour le moment. Ouvrez Nouveautés et appuyez sur ♡ Add to My List.</p>';
+  if(!items.length) return '<p class="catalog-note">No movies here yet. Browse New Releases or try refreshing.</p>';
   return '<div class="cards">'+items.map(m=>{
-    const poster=escapeHTML(m.poster.replace("100x100bb","600x900bb"));
+    const poster=escapeHTML(String(m.poster||"").replace("100x100bb","600x900bb"));
     const link=escapeHTML(m.link);
     const preview=m.preview ? '<button onclick="playCatalogPreview('+Number(m.id)+')">▶ Watch Trailer</button>' : '<span class="catalog-note">Trailer unavailable</span>';
-    return '<article class="card"><img class="catalog-poster" loading="lazy" src="'+poster+'" alt="Affiche de '+escapeHTML(m.title)+'"><div class="catalog-info"><h3>'+escapeHTML(m.title)+'</h3><p>'+escapeHTML(m.release?.slice(0,4)||"Unknown date")+' · '+escapeHTML(m.genre)+(m.duration?' · '+m.duration+' min':'')+(m.rating?' · '+escapeHTML(m.rating):'')+'</p>'+(m.description?'<details class="movie-details"><summary>Movie Overview</summary><p>'+escapeHTML(m.description)+'</p></details>':'')+'<button type="button" data-fav-id="'+Number(m.id)+'" aria-pressed="'+String(!!catalogFav[String(m.id)])+'" onclick="toggleCatalogFavorite('+Number(m.id)+')">'+(catalogFav[String(m.id)]?'♥ In My List':'♡ Add to My List')+'</button><a href="'+link+'" target="_blank" rel="noopener noreferrer">View on Apple TV</a>'+preview+'</div></article>';
+    return '<article class="card"><img class="catalog-poster" loading="lazy" src="'+poster+'" alt="Poster for '+escapeHTML(m.title)+'"><div class="catalog-info"><h3>'+escapeHTML(m.title)+'</h3><p>'+escapeHTML(m.release?.slice(0,4)||"Unknown date")+' · '+escapeHTML(m.genre)+(m.duration?' · '+m.duration+' min':'')+(m.rating?' · '+escapeHTML(m.rating):'')+'</p>'+(m.description?'<details class="movie-details"><summary>Movie Overview</summary><p>'+escapeHTML(m.description)+'</p></details>':'')+'<button type="button" data-fav-id="'+Number(m.id)+'" aria-pressed="'+String(!!catalogFav[String(m.id)])+'" onclick="toggleCatalogFavorite('+Number(m.id)+')">'+(catalogFav[String(m.id)]?'♥ In My List':'♡ Add to My List')+'</button><a href="'+link+'" target="_blank" rel="noopener noreferrer">View on Apple TV</a>'+preview+'</div></article>';
   }).join("")+'</div>';
 }
 function playCatalogPreview(id) {
-  const movie=catalog.find(m=>m.id===id)||Object.values(genreMemory).flat().find(m=>m.id===id);
+  const movie=catalog.find(m=>m.id===id)||Object.values(genreMemory).flat().find(m=>m.id===id)||catalogFav[String(id)];
   if(!movie || !movie.preview) return;
   const panel=document.getElementById("catalog-player");
   if(!panel) return;
   panel.hidden=false;
-  panel.innerHTML='<div class="player-shell"><h3>'+escapeHTML(movie.title)+'</h3><p>Official promotional preview (si disponible dans votre région).</p><video id="catalog-video" controls playsinline preload="metadata" src="'+escapeHTML(movie.preview)+'"></video><div class="video-actions"><button onclick="startCatalogVideo()">▶ Play with Sound</button><button onclick="closeCatalogPreview()">✕ Close</button></div><p id="catalog-video-error" role="status"></p>';
+  panel.innerHTML='<div class="player-shell"><h3>'+escapeHTML(movie.title)+'</h3><p>Official promotional preview (availability varies by region).</p><video id="catalog-video" controls playsinline preload="metadata" src="'+escapeHTML(movie.preview)+'"></video><div class="video-actions"><button onclick="startCatalogVideo()">▶ Play with Sound</button><button onclick="closeCatalogPreview()">✕ Close</button></div><p id="catalog-video-error" role="status"></p>';
   const v=document.getElementById("catalog-video");
   v.muted=false;
-  v.addEventListener("playing",()=>{document.getElementById("catalog-video-error").textContent="Bande-annonce en lecture.";});
-  v.addEventListener("error",()=>{document.getElementById("catalog-video-error").textContent="Cet extrait ne peut pas être lu ici. Essayez le lien Apple TV du film.";});
+  v.addEventListener("playing",()=>{document.getElementById("catalog-video-error").textContent="Trailer playing.";});
+  v.addEventListener("error",()=>{document.getElementById("catalog-video-error").textContent="This trailer cannot play here. Try the Apple TV link.";});
   panel.scrollIntoView({behavior:"smooth",block:"start"});
 }
 function closeCatalogPreview() {
@@ -418,8 +443,8 @@ function closeCatalogPreview() {
   if(panel) {panel.innerHTML="";panel.hidden=true;}
 }
 async function renderCatalog(page,force=false) {
-  const title=page==="nouveautes"?"🆕 Recent Movies":"🔥 Movies to Discover";
-  document.getElementById("app").innerHTML='<section><h2>'+title+'</h2><p class="catalog-note">Catalogue issu de l’Apple Store, mis à jour au plus une fois par jour lors des visites. Disponibilité variable selon le pays. Les extraits sont promotionnels et les films complets ne sont pas hébergés ici.</p><button onclick="renderCatalog(\''+page+'\',true)">↻ Refresh Now</button><div id="catalog-player" hidden></div><div id="catalog-results"><p>Loading…</p></div></section>';
+  const title=page==="nouveautes"?"🆕 Latest Releases":"🔥 Trending Picks";
+  document.getElementById("app").innerHTML='<section><h2>'+title+'</h2><p class="catalog-note">Movie discovery via Apple Store listings, refreshed when visited (up to once daily). Trending Picks are curated selections, not verified popularity rankings. Trailer availability varies by region. No full movies are hosted here.</p><button onclick="renderCatalog(\''+page+'\',true)">↻ Refresh Now</button><div id="catalog-player" hidden></div><div id="catalog-results"><p>Loading…</p></div></section>';
   await loadCatalog(force);
   if(currentPage!==page) return;
   const items=page==="nouveautes"?catalog.filter(m=>m.release && new Date(m.release)<=new Date()).slice(0,36):catalog.slice(20,56);
@@ -435,7 +460,7 @@ function startCatalogVideo(){
 }
 async function renderSearch(){
  currentPage="recherche";
- document.getElementById("app").innerHTML='<section><h2>🔎 Search Movies</h2><p class="catalog-note">Recherche dans le catalogue disponible. Les films complets ne sont pas hébergés sur StreamPlus.</p><div class="search-box"><input id="movie-search" type="search" placeholder="Title, genre, year…" aria-label="Search Movies"><button onclick="filterMovies()">Search</button></div><p class="search-count" id="search-count" role="status">Loading…</p><div id="catalog-player" hidden></div><div id="search-results"></div></section>';
+ document.getElementById("app").innerHTML='<section><h2>🔎 Search Movies</h2><p class="catalog-note">Search available catalog titles. Full movies are not hosted on StreamPlus.</p><div class="search-box"><input id="movie-search" type="search" placeholder="Title, genre, year…" aria-label="Search Movies"><button onclick="filterMovies()">Search</button></div><p class="search-count" id="search-count" role="status">Loading…</p><div id="catalog-player" hidden></div><div id="search-results"></div></section>';
  const input=document.getElementById("movie-search");
  input.addEventListener("input",filterMovies);
  await loadCatalog();
@@ -482,8 +507,8 @@ async function fetchGenreItems(page,force=false){
 }
 async function renderGenrePage(page,force=false){
  currentPage=page;
- const names={bollywood:"🇮🇳 Films Bollywood",hollywood:"🎥 Films Hollywood",seriespop:"📺 Séries à découvrir"};
- document.getElementById("app").innerHTML='<section><h2>'+names[page]+'</h2><p class="catalog-note">Sélection de résultats Apple Store. Les catégories sont indicatives, et les bandes-annonces ne sont pas toujours disponibles.</p><button onclick="renderGenrePage(\''+page+'\',true)">↻ Actualiser</button><div id="catalog-player" hidden></div><div id="genre-results" role="status">Loading…</div></section>';
+ const names={bollywood:"🇮🇳 Bollywood Movies",hollywood:"🎥 Hollywood Movies",seriespop:"📺 Popular Series Picks"};
+ document.getElementById("app").innerHTML='<section><h2>'+names[page]+'</h2><p class="catalog-note">Apple Store discovery results. Categories are approximate and trailers may be unavailable.</p><button onclick="renderGenrePage(\''+page+'\',true)">↻ Refresh</button><div id="catalog-player" hidden></div><div id="genre-results" role="status">Loading…</div></section>';
  try{
   const items=await fetchGenreItems(page,force);
   if(currentPage!==page)return;
@@ -491,7 +516,7 @@ async function renderGenrePage(page,force=false){
   const target=document.getElementById("genre-results");
   if(!target)return;
   target.innerHTML=items.length?renderCatalogCards(items.slice(0,48)):'<p>No results available. Try again later.</p>';
- }catch(e){const target=document.getElementById("genre-results");if(target)target.textContent="Catalogue temporairement indisponible. Réessayez.";}
+ }catch(e){const target=document.getElementById("genre-results");if(target)target.textContent="Catalog temporarily unavailable. Please retry.";}
 }
 
 let installPrompt=null;
