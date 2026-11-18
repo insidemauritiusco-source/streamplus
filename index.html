@@ -243,9 +243,7 @@ function show(page) {
   }
 
   if (page === "favoris") {
-    html = `<section><h2>Ma liste</h2>
-      ${cards(films.filter((f,i)=>fav.includes(i)))}
-      </section>`;
+    html = `<section><h2>❤️ Ma liste</h2><p class="catalog-note">Films enregistrés sur cet appareil.</p><div id="catalog-player" hidden></div><div id="saved-catalog">${renderCatalogCards(Object.values(catalogFav))}</div><h2>Films de démonstration</h2>${cards(films.filter((f,i)=>fav.includes(i)))}</section>`;
   }
 
   if (page === "profils") {
@@ -391,7 +389,7 @@ async function loadCatalog(force=false) {
   return catalog;
 }
 function renderCatalogCards(items) {
-  if(!items.length) return '<p>Aucun film disponible pour le moment.</p>';
+  if(!items.length) return '<p>Aucun film enregistré pour le moment. Ouvrez Nouveautés et appuyez sur ♡ Ajouter à ma liste.</p>';
   return '<div class="cards">'+items.map(m=>{
     const poster=escapeHTML(m.poster.replace("100x100bb","600x900bb"));
     const link=escapeHTML(m.link);
