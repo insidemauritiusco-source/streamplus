@@ -404,8 +404,8 @@ const FALLBACK_CATALOG=FALLBACK_TITLES.map(([title,year,genre],index)=>({
 
 let catalog = [];
 let catalogError = "";
-const CACHE_KEY = "streamplus-catalog-v3";
-const LEGACY_CACHE_KEY = "streamplus-catalog-v2";
+const CACHE_KEY = "streamplus-catalog-v4";
+const LEGACY_CACHE_KEY = "streamplus-catalog-v3";
 function escapeHTML(s) { return String(s ?? "").replace(/[&<>"']/g, x=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[x])); }
 async function appleSearch(term) {
  const url="https://itunes.apple.com/search?media=movie&entity=movie&country=us&limit=100&term="+encodeURIComponent(term);
@@ -435,6 +435,13 @@ async function loadPublishedCatalog(){
   return Array.isArray(data.items)?data.items.filter(m=>m.id&&m.title&&m.poster&&m.link):[];
  }catch(e){return [];}
 }
+async function loadPublishedCatalog(){
+ const response=await fetch("./catalog.json?ts="+Date.now(),{cache:"no-store"});
+ if(!response.ok)throw Error("Published catalog unavailable");
+ const data=await response.json();
+ if(!Array.isArray(data.items)||!data.items.length)throw Error("Published catalog empty");
+ return data.items.filter(m=>m.id&&m.title&&m.poster&&m.link);
+}
 async function loadCatalog(force=false) {
   if(catalog.length && !force) return catalog;
   const published=await loadPublishedCatalog();
@@ -447,6 +454,14 @@ async function loadCatalog(force=false) {
   } catch(e) {}
   try {
     const year=new Date().getFullYear();
+    let published=[];
+    try{published=await loadPublishedCatalog();}catch(e){}
+    if(published.length){
+      catalog=published.sort((a,b)=>(b.release||"").localeCompare(a.release||""));
+      catalogError="";
+      try{localStorage.setItem(CACHE_KEY,JSON.stringify({at:Date.now(),items:catalog}));}catch(e){}
+      return catalog;
+    }
     const batches=await Promise.allSettled([appleSearch(String(year)),appleSearch(String(year-1)),appleSearch("Bollywood"),appleSearch("blockbuster")]);
     const unique=new Map();
     batches.forEach(b=>{ if(b.status==="fulfilled") b.value.forEach(m=>{
