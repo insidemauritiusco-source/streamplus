@@ -279,31 +279,6 @@ function favorite(id) {
 
 function watch(id) {
   if (!films[id]) return 
-function startCatalogVideo(){
- const v=document.getElementById("catalog-video");
- if(!v)return;
- v.muted=false;
- v.volume=1;
- v.play().catch(()=>{const e=document.getElementById("catalog-video-error");if(e)e.textContent="Lecture impossible ici. Utilisez ▶ dans la vidéo ou le lien Apple TV.";});
-}
-async function renderSearch(){
- currentPage="recherche";
- document.getElementById("app").innerHTML='<section><h2>🔎 Rechercher des films</h2><p class="catalog-note">Recherche dans le catalogue disponible. Les films complets ne sont pas hébergés sur StreamPlus.</p><div class="search-box"><input id="movie-search" type="search" placeholder="Titre, genre, année…" aria-label="Rechercher des films"><button onclick="filterMovies()">Rechercher</button></div><p class="search-count" id="search-count" role="status">Chargement…</p><div id="catalog-player" hidden></div><div id="search-results"></div></section>';
- const input=document.getElementById("movie-search");
- input.addEventListener("input",filterMovies);
- await loadCatalog();
- if(currentPage!=="recherche")return;
- filterMovies();
-}
-function filterMovies(){
- const input=document.getElementById("movie-search");
- const target=document.getElementById("search-results");
- if(!input||!target)return;
- const q=input.value.trim().toLocaleLowerCase();
- const found=catalog.filter(m=>[m.title,m.genre,m.release?.slice(0,4)].some(v=>String(v||"").toLocaleLowerCase().includes(q)));
- document.getElementById("search-count").textContent=found.length+" film(s) trouvé(s)"+(catalogError?" — catalogue en cache ou indisponible":"");
- target.innerHTML=renderCatalogCards(found.slice(0,60));
-}
 
 show("accueil");
   currentPage = "lecteur";
@@ -424,6 +399,32 @@ async function renderCatalog(page,force=false) {
   if(currentPage!==page) return;
   const items=page==="nouveautes"?catalog.filter(m=>m.release && new Date(m.release)<=new Date()).slice(0,36):catalog.slice(20,56);
   document.getElementById("catalog-results").innerHTML=(catalogError?'<p role="status">'+escapeHTML(catalogError)+'</p>':'')+renderCatalogCards(items.length?items:catalog.slice(0,36));
+}
+
+function startCatalogVideo(){
+ const v=document.getElementById("catalog-video");
+ if(!v)return;
+ v.muted=false;
+ v.volume=1;
+ v.play().catch(()=>{const e=document.getElementById("catalog-video-error");if(e)e.textContent="Lecture impossible ici. Utilisez ▶ dans la vidéo ou le lien Apple TV.";});
+}
+async function renderSearch(){
+ currentPage="recherche";
+ document.getElementById("app").innerHTML='<section><h2>🔎 Rechercher des films</h2><p class="catalog-note">Recherche dans le catalogue disponible. Les films complets ne sont pas hébergés sur StreamPlus.</p><div class="search-box"><input id="movie-search" type="search" placeholder="Titre, genre, année…" aria-label="Rechercher des films"><button onclick="filterMovies()">Rechercher</button></div><p class="search-count" id="search-count" role="status">Chargement…</p><div id="catalog-player" hidden></div><div id="search-results"></div></section>';
+ const input=document.getElementById("movie-search");
+ input.addEventListener("input",filterMovies);
+ await loadCatalog();
+ if(currentPage!=="recherche")return;
+ filterMovies();
+}
+function filterMovies(){
+ const input=document.getElementById("movie-search");
+ const target=document.getElementById("search-results");
+ if(!input||!target)return;
+ const q=input.value.trim().toLocaleLowerCase();
+ const found=catalog.filter(m=>[m.title,m.genre,m.release?.slice(0,4)].some(v=>String(v||"").toLocaleLowerCase().includes(q)));
+ document.getElementById("search-count").textContent=found.length+" film(s) trouvé(s)"+(catalogError?" — catalogue en cache ou indisponible":"");
+ target.innerHTML=renderCatalogCards(found.slice(0,60));
 }
 
 show("accueil");
