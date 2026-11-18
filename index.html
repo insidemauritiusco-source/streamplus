@@ -128,7 +128,14 @@ nav {position:sticky;top:66px;z-index:19;scrollbar-width:thin}
 .search-count {color:#c6bad8}
 .player-shell {background:#130e22;border:1px solid #543078;border-radius:15px;padding:15px;margin:15px 0}
 .player-shell video {width:100%;max-height:65vh;object-fit:contain}
-@media(max-width:480px){nav{top:59px}.catalog-poster{height:215px}.cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.catalog-info{padding:9px}.catalog-info a{font-size:12px}.hero{min-height:240px}}
+@media(max-width:480px){nav{top:59px}.catalog-poster{height:215px}.cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.catalog-info{padding:9px}.catalog-info a{font-size:12px}
+.catalog-info button,.catalog-info a{background:#7836c7!important;color:#fff!important;border:1px solid #a56ae9!important;display:inline-flex;align-items:center;justify-content:center;min-height:39px;text-align:center;line-height:1.25;font-weight:700;text-decoration:none;border-radius:9px}
+.catalog-info button:hover,.catalog-info a:hover{background:#9b54ec!important}
+.catalog-info .trailer-link{background:#26173c!important}
+.catalog-poster{object-fit:cover;aspect-ratio:2/3;height:auto;min-height:210px}
+.catalog-info{display:flex;flex-direction:column;gap:6px}
+.catalog-info h3{min-height:36px}
+.hero{min-height:240px}}
 
 
 /* StreamPlus V2 */
@@ -314,7 +321,7 @@ function show(page) {
       if(currentPage!=="accueil")return;
       const latest=document.getElementById("home-catalog"),trending=document.getElementById("home-trending");
       if(latest)latest.innerHTML=(catalogError?'<p class="catalog-note">'+escapeHTML(catalogError)+'</p>':"")+renderCatalogCards(catalog.filter(m=>!m.release||new Date(m.release)<=new Date()).slice(0,8));
-      if(trending)trending.innerHTML=renderCatalogCards(catalog.slice(20,28));
+      if(trending)trending.innerHTML=renderCatalogCards(catalog.length<=20?catalog.slice(4,12):catalog.slice(20,28));
     });
   }
 }
@@ -377,13 +384,20 @@ const FALLBACK_TITLES=[
  ["Dune: Part Two",2024,"Science Fiction"],["Inside Out 2",2024,"Animation"],["Wicked",2024,"Musical"],["The Wild Robot",2024,"Animation"],["Deadpool & Wolverine",2024,"Action"],["Moana 2",2024,"Animation"],["Gladiator II",2024,"Action"],["Furiosa: A Mad Max Saga",2024,"Action"],["The Substance",2024,"Horror"],["A Quiet Place: Day One",2024,"Thriller"],["Kung Fu Panda 4",2024,"Animation"],["Beetlejuice Beetlejuice",2024,"Comedy"]
 ];
 function fallbackPoster(title){
- const words=title.replace(/&/g,"and");
- const svg='<svg xmlns="http://www.w3.org/2000/svg" width="400" height="600" viewBox="0 0 400 600"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#51217d"/><stop offset="1" stop-color="#100a21"/></linearGradient></defs><rect width="400" height="600" fill="url(#g)"/><circle cx="300" cy="160" r="140" fill="#9b5cff" opacity=".2"/><text x="200" y="265" text-anchor="middle" font-size="90" fill="#fff">▶</text><text x="200" y="390" text-anchor="middle" font-family="Arial" font-size="25" fill="white">STREAMPLUS</text><text x="200" y="435" text-anchor="middle" font-family="Arial" font-size="17" fill="#d6baff">DISCOVERY PICK</text></svg>';
+ const lines=title.length>19?[title.slice(0,19),title.slice(19,38)]:[title];
+ const colors=["#7b3ce1","#3a59c7","#bb3a93","#177e9c","#a43f60","#6846b3"];
+ const accent=colors[FALLBACK_TITLES.findIndex(x=>x[0]===title)%colors.length]||"#9747ff";
+ const safe=x=>String(x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="'+accent+'"/><stop offset="1" stop-color="#100a21"/></linearGradient></defs><rect width="400" height="600" fill="url(#g)"/><circle cx="310" cy="155" r="160" fill="#ffffff" opacity=".07"/><path d="M0 400L400 200V600H0Z" fill="#000" opacity=".28"/><text x="200" y="235" text-anchor="middle" font-size="105" fill="#ffffff" opacity=".9">▶</text>'+lines.map((line,i)=>'<text x="200" y="'+(390+i*39)+'" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="27" fill="white">'+safe(line)+'</text>').join("")+'<text x="200" y="555" text-anchor="middle" font-family="Arial" font-size="17" letter-spacing="2" fill="#e6d5ff">STREAMPLUS PICK</text></svg>';
  return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
 }
+function trailerSearchUrl(title,year){
+ return "https://www.youtube.com/results?search_query="+encodeURIComponent(title+" "+(year||"")+" official trailer");
+}
+
 const FALLBACK_CATALOG=FALLBACK_TITLES.map(([title,year,genre],index)=>({
  id:-(index+1),title,release:year+"-01-01",genre,poster:fallbackPoster(title),
- link:"https://tv.apple.com/search?term="+encodeURIComponent(title),preview:"",
+ link:"https://tv.apple.com/search?term="+encodeURIComponent(title),preview:"",trailerLink:trailerSearchUrl(title,year),
  description:"Curated discovery title. Open Apple TV to check availability in your region.",
  fallback:true
 }));
@@ -447,7 +461,7 @@ function renderCatalogCards(items) {
   return '<div class="cards">'+items.map(m=>{
     const poster=escapeHTML(String(m.poster||"").replace("100x100bb","600x900bb"));
     const link=escapeHTML(m.link);
-    const preview=m.preview ? '<button onclick="playCatalogPreview('+Number(m.id)+')">▶ Watch Trailer</button>' : '<span class="catalog-note">Trailer unavailable</span>';
+    const preview=m.preview ? '<button class="trailer-button" onclick="playCatalogPreview('+Number(m.id)+')">▶ Watch Trailer</button>' : '<a class="trailer-link" href="'+escapeHTML(m.trailerLink||trailerSearchUrl(m.title,m.release?.slice(0,4)))+'" target="_blank" rel="noopener noreferrer">▶ Find Official Trailer</a>';
     return '<article class="card"><img class="catalog-poster" loading="lazy" src="'+poster+'" alt="Poster for '+escapeHTML(m.title)+'"><div class="catalog-info"><h3>'+escapeHTML(m.title)+'</h3><p>'+escapeHTML(m.release?.slice(0,4)||"Unknown date")+' · '+escapeHTML(m.genre)+(m.duration?' · '+m.duration+' min':'')+(m.rating?' · '+escapeHTML(m.rating):'')+'</p>'+(m.description?'<details class="movie-details"><summary>Movie Overview</summary><p>'+escapeHTML(m.description)+'</p></details>':'')+'<button type="button" data-fav-id="'+Number(m.id)+'" aria-pressed="'+String(!!catalogFav[String(m.id)])+'" onclick="toggleCatalogFavorite('+Number(m.id)+')">'+(catalogFav[String(m.id)]?'♥ In My List':'♡ Add to My List')+'</button><a href="'+link+'" target="_blank" rel="noopener noreferrer">'+(m.fallback?"Search Apple TV":"View on Apple TV")+"</a>"+preview+'</div></article>';
   }).join("")+'</div>';
 }
