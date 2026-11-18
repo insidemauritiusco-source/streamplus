@@ -138,6 +138,9 @@ nav {position:sticky;top:66px;z-index:19;scrollbar-width:thin}
   <button onclick="show('accueil')">Accueil</button>
   <button onclick="show('films')">Films</button>
   <button onclick="show('recherche')">🔎 Recherche</button>
+  <button onclick="show('bollywood')">🇮🇳 Bollywood</button>
+  <button onclick="show('hollywood')">🎥 Hollywood</button>
+  <button onclick="show('seriespop')">📺 Séries populaires</button>
   <button onclick="show('nouveautes')">🆕 Nouveautés</button>
   <button onclick="show('populaires')">🔥 À découvrir</button>
   <button onclick="show('series')">Séries</button>
@@ -205,6 +208,7 @@ function show(page) {
 
   if (page === "nouveautes" || page === "populaires") { renderCatalog(page); return; }
   if (page === "recherche") { renderSearch(); return; }
+  if (["bollywood","hollywood","seriespop"].includes(page)) { renderGenrePage(page); return; }
 
   if (page === "films") {
     html = `<section><h2>Films</h2>
@@ -376,7 +380,7 @@ function renderCatalogCards(items) {
   }).join("")+'</div>';
 }
 function playCatalogPreview(id) {
-  const movie=catalog.find(m=>m.id===id);
+  const movie=catalog.find(m=>m.id===id)||Object.values(genreMemory).flat().find(m=>m.id===id);
   if(!movie || !movie.preview) return;
   const panel=document.getElementById("catalog-player");
   if(!panel) return;
@@ -425,6 +429,48 @@ function filterMovies(){
  const found=catalog.filter(m=>[m.title,m.genre,m.release?.slice(0,4)].some(v=>String(v||"").toLocaleLowerCase().includes(q)));
  document.getElementById("search-count").textContent=found.length+" film(s) trouvé(s)"+(catalogError?" — catalogue en cache ou indisponible":"");
  target.innerHTML=renderCatalogCards(found.slice(0,60));
+}
+
+const GENRE_CACHE="streamplus-genres-v1";
+const genreMemory={};
+async function fetchGenreItems(page,force=false){
+ const saved=(()=>{try{return JSON.parse(localStorage.getItem(GENRE_CACHE)||"{}")}catch(e){return {}}})();
+ if(!force&&saved[page]&&Date.now()-saved[page].at<86400000)return saved[page].items;
+ const config={
+  bollywood:{terms:["Bollywood","Hindi cinema","Shah Rukh Khan"],media:"movie",entity:"movie"},
+  hollywood:{terms:["Hollywood","action movie","science fiction"],media:"movie",entity:"movie"},
+  seriespop:{terms:["drama","comedy","thriller"],media:"tvShow",entity:"tvSeason"}
+ }[page];
+ const requests=config.terms.map(term=>fetch("https://itunes.apple.com/search?country=us&limit=70&media="+config.media+"&entity="+config.entity+"&term="+encodeURIComponent(term)).then(r=>{if(!r.ok)throw Error("API");return r.json()}));
+ const batches=await Promise.allSettled(requests);
+ const unique=new Map();
+ for(const b of batches){
+  if(b.status!=="fulfilled")continue;
+  for(const m of (b.value.results||[])){
+   const id=m.trackId||m.collectionId;
+   const title=m.trackName||m.collectionName;
+   const link=m.trackViewUrl||m.collectionViewUrl;
+   if(!id||!title||!link||!m.artworkUrl100)continue;
+   if(config.media==="movie"&&m.kind!=="feature-movie")continue;
+   unique.set(id,{id,title,release:m.releaseDate||"",genre:m.primaryGenreName||"Série",poster:m.artworkUrl100,link,preview:m.previewUrl||"",description:m.longDescription||m.shortDescription||"",duration:m.trackTimeMillis?Math.round(m.trackTimeMillis/60000):null,rating:m.contentAdvisoryRating||""});
+  }
+ }
+ const items=[...unique.values()].sort((a,b)=>b.release.localeCompare(a.release));
+ if(items.length){saved[page]={at:Date.now(),items};try{localStorage.setItem(GENRE_CACHE,JSON.stringify(saved))}catch(e){}return items;}
+ return saved[page]?.items||[];
+}
+async function renderGenrePage(page,force=false){
+ currentPage=page;
+ const names={bollywood:"🇮🇳 Films Bollywood",hollywood:"🎥 Films Hollywood",seriespop:"📺 Séries à découvrir"};
+ document.getElementById("app").innerHTML='<section><h2>'+names[page]+'</h2><p class="catalog-note">Sélection de résultats Apple Store. Les catégories sont indicatives, et les bandes-annonces ne sont pas toujours disponibles.</p><button onclick="renderGenrePage(\''+page+'\',true)">↻ Actualiser</button><div id="catalog-player" hidden></div><div id="genre-results" role="status">Chargement…</div></section>';
+ try{
+  const items=await fetchGenreItems(page,force);
+  if(currentPage!==page)return;
+  genreMemory[page]=items;
+  const target=document.getElementById("genre-results");
+  if(!target)return;
+  target.innerHTML=items.length?renderCatalogCards(items.slice(0,48)):'<p>Aucun résultat disponible. Réessayez plus tard.</p>';
+ }catch(e){const target=document.getElementById("genre-results");if(target)target.textContent="Catalogue temporairement indisponible. Réessayez.";}
 }
 
 show("accueil");
