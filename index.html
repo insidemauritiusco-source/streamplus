@@ -47,6 +47,12 @@ button {
   cursor: pointer;
 }
 nav button { white-space: nowrap; }
+.catalog-poster { width:100%; height:225px; object-fit:cover; background:#27143f; }
+.catalog-info { padding:12px; }
+.catalog-info h3 { padding:0; margin:6px 0; font-size:16px; }
+.catalog-info p { color:#d0c4e2; font-size:13px; }
+.catalog-info a { display:inline-block; padding:10px; background:#9747ff; color:white; border-radius:8px; text-decoration:none; margin:4px 4px 0 0; }
+.catalog-note { color:#c9b9e3; line-height:1.5; }
 button:hover,button:focus-visible { filter: brightness(1.15); outline-offset: 3px; }
 button:disabled { opacity: .5; cursor: not-allowed; }
 .card { transition: transform .2s; }
@@ -109,6 +115,8 @@ footer {
 <nav>
   <button onclick="show('accueil')">Accueil</button>
   <button onclick="show('films')">Films</button>
+  <button onclick="show('nouveautes')">🆕 Nouveautés</button>
+  <button onclick="show('populaires')">🔥 À découvrir</button>
   <button onclick="show('series')">Séries</button>
   <button onclick="show('favoris')">Ma liste</button>
   <button onclick="show('profils')">Profils</button>
@@ -164,10 +172,14 @@ function show(page) {
         </button>
       </div>
       <section>
-        <h2>À découvrir</h2>
+        <h2>🆕 Nouveaux films</h2><div id="home-catalog"><p>Chargement du catalogue…</p></div>
+        <button onclick="show('nouveautes')">Voir toutes les nouveautés</button>
+        <h2>Films de démonstration</h2>
         ${cards(films)}
       </section>`;
   }
+
+  if (page === "nouveautes" || page === "populaires") { renderCatalog(page); return; }
 
   if (page === "films") {
     html = `<section><h2>Films</h2>
@@ -227,6 +239,7 @@ function show(page) {
   }
 
   document.getElementById("app").innerHTML = html;
+  if (page === "accueil") loadCatalog().then(() => { const el=document.getElementById("home-catalog"); if(el) el.innerHTML=renderCatalogCards(catalog.slice(0,6)); });
 }
 
 function favorite(id) {
@@ -277,6 +290,73 @@ function toggleMute() {
   if (!v) return;
   v.muted = !v.muted;
   document.getElementById("video-status").textContent = v.muted ? "Son coupé" : "Son activé. Montez le volume multimédia si nécessaire.";
+}
+
+/* Catalogue Apple Store: métadonnées renouvelées au maximum une fois par jour.
+   Le classement "À découvrir" est une sélection, pas un classement de ventes. */
+let catalog = [];
+let catalogError = "";
+const CACHE_KEY = "streamplus-catalog-v1";
+function escapeHTML(s) { return String(s ?? "").replace(/[&<>"']/g, x=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[x])); }
+function appleSearch(term) {
+  return new Promise((resolve,reject) => {
+    const cb = "spApple" + Math.random().toString(36).slice(2);
+    const script=document.createElement("script");
+    const timeout=setTimeout(()=>finish(new Error("Délai dépassé")),12000);
+    function finish(err,data) {
+      clearTimeout(timeout); delete window[cb]; script.remove();
+      err ? reject(err) : resolve(data.results || []);
+    }
+    window[cb] = data=>finish(null,data);
+    script.onerror=()=>finish(new Error("Catalogue indisponible"));
+    script.src="https://itunes.apple.com/search?media=movie&entity=movie&country=us&limit=80&term="+encodeURIComponent(term)+"&callback="+cb;
+    document.head.appendChild(script);
+  });
+}
+async function loadCatalog(force=false) {
+  if(catalog.length && !force) return catalog;
+  try {
+    const saved=JSON.parse(localStorage.getItem(CACHE_KEY)||"null");
+    if(!force && saved && Date.now()-saved.at<86400000 && Array.isArray(saved.items)) {
+      catalog=saved.items; return catalog;
+    }
+  } catch(e) {}
+  try {
+    const year=new Date().getFullYear();
+    const batches=await Promise.allSettled([appleSearch(String(year)),appleSearch(String(year-1)),appleSearch("Bollywood"),appleSearch("blockbuster")]);
+    const unique=new Map();
+    batches.forEach(b=>{ if(b.status==="fulfilled") b.value.forEach(m=>{
+      if(m.kind==="feature-movie" && m.trackId && m.trackName && m.trackViewUrl && m.artworkUrl100) unique.set(m.trackId,{
+        id:m.trackId,title:m.trackName,release:m.releaseDate||"",genre:m.primaryGenreName||"Film",
+        poster:m.artworkUrl100,link:m.trackViewUrl,preview:m.previewUrl||""
+      });
+    }); });
+    if(!unique.size) throw new Error("Aucun résultat");
+    catalog=Array.from(unique.values()).sort((a,b)=>b.release.localeCompare(a.release));
+    localStorage.setItem(CACHE_KEY,JSON.stringify({at:Date.now(),items:catalog}));
+    catalogError="";
+  } catch(e) {
+    catalogError="Actualisation impossible. Vérifiez Internet et réessayez.";
+    try { const old=JSON.parse(localStorage.getItem(CACHE_KEY)||"null"); catalog=old?.items||[]; } catch(e) {}
+  }
+  return catalog;
+}
+function renderCatalogCards(items) {
+  if(!items.length) return '<p>Aucun film disponible pour le moment.</p>';
+  return '<div class="cards">'+items.map(m=>{
+    const poster=escapeHTML(m.poster.replace("100x100bb","600x900bb"));
+    const link=escapeHTML(m.link);
+    const preview=m.preview ? '<a href="'+escapeHTML(m.preview)+'" target="_blank" rel="noopener noreferrer">▶ Extrait officiel</a>' : "";
+    return '<article class="card"><img class="catalog-poster" loading="lazy" src="'+poster+'" alt="Affiche de '+escapeHTML(m.title)+'"><div class="catalog-info"><h3>'+escapeHTML(m.title)+'</h3><p>'+escapeHTML(m.release?.slice(0,4)||"Date inconnue")+' · '+escapeHTML(m.genre)+'</p><a href="'+link+'" target="_blank" rel="noopener noreferrer">Voir sur Apple TV</a>'+preview+'</div></article>';
+  }).join("")+'</div>';
+}
+async function renderCatalog(page,force=false) {
+  const title=page==="nouveautes"?"🆕 Films récents":"🔥 Films à découvrir";
+  document.getElementById("app").innerHTML='<section><h2>'+title+'</h2><p class="catalog-note">Catalogue issu de l’Apple Store, mis à jour au plus une fois par jour lors des visites. Disponibilité variable selon le pays. Les extraits sont promotionnels et les films complets ne sont pas hébergés ici.</p><button onclick="renderCatalog(\''+page+'\',true)">↻ Actualiser maintenant</button><div id="catalog-results"><p>Chargement…</p></div></section>';
+  await loadCatalog(force);
+  if(currentPage!==page) return;
+  const items=page==="nouveautes"?catalog.filter(m=>m.release && new Date(m.release)<=new Date()).slice(0,36):catalog.slice(20,56);
+  document.getElementById("catalog-results").innerHTML=(catalogError?'<p role="status">'+escapeHTML(catalogError)+'</p>':'')+renderCatalogCards(items.length?items:catalog.slice(0,36));
 }
 
 show("accueil");
