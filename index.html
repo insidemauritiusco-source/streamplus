@@ -9,6 +9,7 @@
   --bg: #090711;
   --card: #1c1630;
   --purple: #9747ff;
+  --muted: #c6bad8;
   --text: #ffffff;
 }
 * { box-sizing: border-box; }
@@ -46,6 +47,14 @@ button {
   cursor: pointer;
 }
 nav button { white-space: nowrap; }
+button:hover,button:focus-visible { filter: brightness(1.15); outline-offset: 3px; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.card { transition: transform .2s; }
+.card:hover { transform: translateY(-3px); }
+.card button { min-height: 42px; }
+.video-actions { display:flex; gap:10px; flex-wrap:wrap; margin:14px 0; }
+video { background:#000; aspect-ratio:16/9; }
+@media(max-width:480px) { header { padding:14px; } .logo { font-size:22px; } .hero { padding:35px 18px; } .hero h1 { font-size:28px; } section { padding:16px; } }
 .hero {
   padding: 55px 20px;
   background: linear-gradient(135deg,#37115d,#100c20);
@@ -123,9 +132,9 @@ const films = [
   {title:"Nouvelle Génération",type:"serie",emoji:"⭐"}
 ];
 
-let fav = JSON.parse(
-  localStorage.getItem("streamplus-fav") || "[]"
-);
+let fav = [];
+try { const saved = JSON.parse(localStorage.getItem("streamplus-fav") || "[]"); fav = Array.isArray(saved) ? saved.filter(x => Number.isInteger(x) && x >= 0 && x < films.length) : []; } catch(e) { fav = []; }
+let currentPage = "accueil";
 
 function cards(items) {
   if (!items.length) return "<p>Aucun titre.</p>";
@@ -136,12 +145,13 @@ function cards(items) {
         <div class="poster">${f.emoji}</div>
         <h3>${f.title}</h3>
         <button onclick="watch(${id})">▶ Voir</button>
-        <button onclick="favorite(${id})">♡</button>
+        <button aria-label="Ajouter ou retirer ${f.title} de ma liste" onclick="favorite(${id})">${fav.includes(id) ? "♥ Dans ma liste" : "♡ Ma liste"}</button>
       </div>`;
   }).join("") + "</div>";
 }
 
 function show(page) {
+  currentPage = page;
   let html = "";
 
   if (page === "accueil") {
@@ -226,23 +236,47 @@ function favorite(id) {
     fav.push(id);
   }
   localStorage.setItem("streamplus-fav",JSON.stringify(fav));
-  alert("Liste mise à jour !");
+  show(currentPage);
 }
 
 function watch(id) {
+  if (!films[id]) return show("accueil");
+  currentPage = "lecteur";
   const title = films[id].title;
   document.getElementById("app").innerHTML = `
     <section>
       <h2>${title}</h2>
-      <p>Vidéo libre de démonstration.
-      Ce n'est pas le film annoncé.</p>
-      <video controls playsinline
-        src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4">
+      <p>Extrait vidéo de démonstration avec audio. Ce n'est pas le film ou la série annoncée.</p>
+      <video id="player" controls playsinline preload="metadata">
+        <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+        Votre navigateur ne prend pas en charge la vidéo.
       </video>
-      <p><button onclick="show('accueil')">
-        Retour à l'accueil
-      </button></p>
+      <div class="video-actions">
+        <button onclick="startVideo()">▶ Lire avec le son</button>
+        <button onclick="toggleMute()">🔊 Activer / couper le son</button>
+        <button onclick="show('accueil')">← Accueil</button>
+      </div>
+      <p id="video-status" role="status">Appuyez sur Lire avec le son. Vérifiez aussi le volume multimédia du téléphone.</p>
     </section>`;
+  const player = document.getElementById("player");
+  player.addEventListener("error", () => {
+    document.getElementById("video-status").textContent = "Vidéo indisponible. Vérifiez votre connexion Internet.";
+  });
+}
+function startVideo() {
+  const v = document.getElementById("player");
+  if (!v) return;
+  v.muted = false;
+  v.volume = 1;
+  v.play().catch(() => {
+    document.getElementById("video-status").textContent = "Lecture bloquée. Appuyez sur ▶ dans le lecteur.";
+  });
+}
+function toggleMute() {
+  const v = document.getElementById("player");
+  if (!v) return;
+  v.muted = !v.muted;
+  document.getElementById("video-status").textContent = v.muted ? "Son coupé" : "Son activé. Montez le volume multimédia si nécessaire.";
 }
 
 show("accueil");
