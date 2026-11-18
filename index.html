@@ -427,8 +427,18 @@ async function appleSearch(term) {
   });
  }
 }
+async function loadPublishedCatalog(){
+ try {
+  const response=await fetch("./catalog.json?version="+Math.floor(Date.now()/3600000),{cache:"no-store"});
+  if(!response.ok) return [];
+  const data=await response.json();
+  return Array.isArray(data.items)?data.items.filter(m=>m.id&&m.title&&m.poster&&m.link):[];
+ }catch(e){return [];}
+}
 async function loadCatalog(force=false) {
   if(catalog.length && !force) return catalog;
+  const published=await loadPublishedCatalog();
+  if(published.length){catalog=published;catalogError="";return catalog;}
   try {
     const saved=JSON.parse(localStorage.getItem(CACHE_KEY)||"null");
     if(!force && saved && Date.now()-saved.at<86400000 && Array.isArray(saved.items)) {
@@ -461,8 +471,8 @@ function renderCatalogCards(items) {
   return '<div class="cards">'+items.map(m=>{
     const poster=escapeHTML(String(m.poster||"").replace("100x100bb","600x900bb"));
     const link=escapeHTML(m.link);
-    const preview=m.preview ? '<button class="trailer-button" onclick="playCatalogPreview('+Number(m.id)+')">▶ Watch Trailer</button>' : '<a class="trailer-link" href="'+escapeHTML(m.trailerLink||trailerSearchUrl(m.title,m.release?.slice(0,4)))+'" target="_blank" rel="noopener noreferrer">▶ Find Official Trailer</a>';
-    return '<article class="card"><img class="catalog-poster" loading="lazy" src="'+poster+'" alt="Poster for '+escapeHTML(m.title)+'"><div class="catalog-info"><h3>'+escapeHTML(m.title)+'</h3><p>'+escapeHTML(m.release?.slice(0,4)||"Unknown date")+' · '+escapeHTML(m.genre)+(m.duration?' · '+m.duration+' min':'')+(m.rating?' · '+escapeHTML(m.rating):'')+'</p>'+(m.description?'<details class="movie-details"><summary>Movie Overview</summary><p>'+escapeHTML(m.description)+'</p></details>':'')+'<button type="button" data-fav-id="'+Number(m.id)+'" aria-pressed="'+String(!!catalogFav[String(m.id)])+'" onclick="toggleCatalogFavorite('+Number(m.id)+')">'+(catalogFav[String(m.id)]?'♥ In My List':'♡ Add to My List')+'</button><a href="'+link+'" target="_blank" rel="noopener noreferrer">'+(m.fallback?"Search Apple TV":"View on Apple TV")+"</a>"+preview+'</div></article>';
+    const preview=m.preview ? '<button class="trailer-button" onclick="playCatalogPreview('+Number(m.id)+')">▶ Watch Trailer</button>' : '<a class="trailer-link" href="'+escapeHTML(m.trailerLink||trailerSearchUrl(m.title,m.release?.slice(0,4)))+'" target="_blank" rel="noopener noreferrer">▶ Search Official Trailer</a>';
+    return '<article class="card"><img class="catalog-poster" loading="lazy" src="'+poster+'" alt="Artwork for '+escapeHTML(m.title)+'"><div class="catalog-info"><h3>'+escapeHTML(m.title)+'</h3><p>'+escapeHTML(m.release?.slice(0,4)||"Unknown date")+' · '+escapeHTML(m.genre)+(m.duration?' · '+m.duration+' min':'')+(m.rating?' · '+escapeHTML(m.rating):'')+'</p>'+(m.description?'<details class="movie-details"><summary>Movie Overview</summary><p>'+escapeHTML(m.description)+'</p></details>':'')+'<button type="button" data-fav-id="'+Number(m.id)+'" aria-pressed="'+String(!!catalogFav[String(m.id)])+'" onclick="toggleCatalogFavorite('+Number(m.id)+')">'+(catalogFav[String(m.id)]?'♥ In My List':'♡ Add to My List')+'</button><a href="'+link+'" target="_blank" rel="noopener noreferrer">'+(m.fallback?"Search Apple TV":"View on Apple TV")+"</a>"+preview+'</div></article>';
   }).join("")+'</div>';
 }
 function playCatalogPreview(id) {
