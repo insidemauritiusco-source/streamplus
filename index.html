@@ -336,22 +336,22 @@ function watch(id) {
   document.getElementById("app").innerHTML = `
     <section>
       <h2>${title}</h2>
-      <p>Extrait vidéo de démonstration avec audio. Ce n'est pas le film ou la série annoncée.</p>
+      <p>Sample video with sound. This is not the advertised movie or series.</p>
       <div class="player-shell"><video id="player" controls playsinline preload="metadata">
         <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
-        Votre navigateur ne prend pas en charge la vidéo.
+        Your browser does not support video playback.
       </video></div>
       <div class="video-actions">
         <button onclick="startVideo()">▶ Play with Sound</button>
         <button onclick="toggleMute()">🔊 Toggle Sound</button>
-        <button onclick="show('accueil')">← Accueil</button>
+        <button onclick="show('accueil')">← Home</button>
       </div>
-      <p id="video-status" role="status">Appuyez sur Play with Sound. Vérifiez aussi le volume multimédia du téléphone.</p>
+      <p id="video-status" role="status">Tap Play with Sound. Check your device media volume.</p>
     </section>`;
   const player = document.getElementById("player");
-  player.addEventListener("playing", () => {document.getElementById("video-status").textContent="Playing. Utilisez les commandes du lecteur pour le volume et le plein écran.";});
+  player.addEventListener("playing", () => {document.getElementById("video-status").textContent="Playing. Use the player controls for volume and full screen.";});
   player.addEventListener("error", () => {
-    document.getElementById("video-status").textContent = "Video unavailable. Vérifiez votre connexion Internet.";
+    document.getElementById("video-status").textContent = "Video unavailable. Check your internet connection.";
   });
 }
 function startVideo() {
@@ -359,35 +359,44 @@ function startVideo() {
   if (!v) return;
   v.muted = false;
   v.volume = 1;
-  v.play().then(()=>{const status=document.getElementById("video-status");if(status)status.textContent="Lecture démarrée avec le son activé.";}).catch(() => {
-    document.getElementById("video-status").textContent = "Playback blocked. Appuyez sur ▶ dans le lecteur.";
+  v.play().then(()=>{const status=document.getElementById("video-status");if(status)status.textContent="Playback started with sound enabled.";}).catch(() => {
+    document.getElementById("video-status").textContent = "Playback blocked. Tap ▶ on the player.";
   });
 }
 function toggleMute() {
   const v = document.getElementById("player");
   if (!v) return;
   v.muted = !v.muted;
-  document.getElementById("video-status").textContent = v.muted ? "Sound off" : "Sound on. Montez le volume multimédia si nécessaire.";
+  document.getElementById("video-status").textContent = v.muted ? "Sound off" : "Sound on. Increase your device media volume if needed.";
 }
 
 /* Catalogue Apple Store: métadonnées renouvelées au maximum une fois par jour.
    Le classement "À découvrir" est une sélection, pas un classement de ventes. */
 let catalog = [];
 let catalogError = "";
-const CACHE_KEY = "streamplus-catalog-v2";
+const CACHE_KEY = "streamplus-catalog-v3";
+const LEGACY_CACHE_KEY = "streamplus-catalog-v2";
 function escapeHTML(s) { return String(s ?? "").replace(/[&<>"']/g, x=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[x])); }
 async function appleSearch(term) {
+ const url="https://itunes.apple.com/search?media=movie&entity=movie&country=us&limit=100&term="+encodeURIComponent(term);
+ try {
   const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),12000);
-  try {
-    const url="https://itunes.apple.com/search?media=movie&entity=movie&country=us&limit=100&term="+encodeURIComponent(term);
-    const response=await fetch(url,{signal:controller.signal});
-    if(!response.ok) throw new Error("Service indisponible");
-    const data=await response.json();
-    return Array.isArray(data.results)?data.results:[];
-  } finally { clearTimeout(timer); }
+  const timer=setTimeout(()=>controller.abort(),9000);
+  try {const response=await fetch(url,{signal:controller.signal,cache:"no-store"});if(!response.ok)throw Error("API error");const data=await response.json();return Array.isArray(data.results)?data.results:[];}
+  finally {clearTimeout(timer);}
+ }catch(fetchError){
+  return new Promise((resolve,reject)=>{
+   const callback="streamplusJSONP_"+Math.random().toString(36).slice(2);
+   const script=document.createElement("script");
+   const timer=setTimeout(()=>finish(null),10000);
+   function finish(data){clearTimeout(timer);delete window[callback];script.remove();if(data&&Array.isArray(data.results))resolve(data.results);else reject(fetchError);}
+   window[callback]=finish;
+   script.onerror=()=>finish(null);
+   script.src=url+"&callback="+callback;
+   document.head.appendChild(script);
+  });
+ }
 }
-
 async function loadCatalog(force=false) {
   if(catalog.length && !force) return catalog;
   try {
@@ -408,11 +417,11 @@ async function loadCatalog(force=false) {
     }); });
     if(!unique.size) throw new Error("Aucun résultat");
     catalog=Array.from(unique.values()).sort((a,b)=>b.release.localeCompare(a.release));
-    localStorage.setItem(CACHE_KEY,JSON.stringify({at:Date.now(),items:catalog}));
+    try{localStorage.setItem(CACHE_KEY,JSON.stringify({at:Date.now(),items:catalog}));}catch(storageError){}
     catalogError="";
   } catch(e) {
-    catalogError="Actualisation impossible. Vérifiez Internet et réessayez.";
-    try { const old=JSON.parse(localStorage.getItem(CACHE_KEY)||"null"); catalog=old?.items||[]; } catch(e) {}
+    catalogError="Unable to refresh movies. Check your internet connection and tap Refresh Now.";
+    try { const old=JSON.parse(localStorage.getItem(CACHE_KEY)||localStorage.getItem(LEGACY_CACHE_KEY)||"null"); catalog=old?.items||[]; } catch(e) {}
   }
   return catalog;
 }
@@ -426,7 +435,7 @@ function renderCatalogCards(items) {
   }).join("")+'</div>';
 }
 function playCatalogPreview(id) {
-  const movie=catalog.find(m=>m.id===id)||Object.values(genreMemory).flat().find(m=>m.id===id)||catalogFav[String(id)];
+  const movie=catalog.find(m=>String(m.id)===String(id))||Object.values(genreMemory).flat().find(m=>String(m.id)===String(id))||catalogFav[String(id)];
   if(!movie || !movie.preview) return;
   const panel=document.getElementById("catalog-player");
   if(!panel) return;
@@ -456,7 +465,7 @@ function startCatalogVideo(){
  if(!v)return;
  v.muted=false;
  v.volume=1;
- v.play().catch(()=>{const e=document.getElementById("catalog-video-error");if(e)e.textContent="Lecture impossible ici. Utilisez ▶ dans la vidéo ou le lien Apple TV.";});
+ v.play().catch(()=>{const e=document.getElementById("catalog-video-error");if(e)e.textContent="Playback unavailable here. Tap ▶ in the video or use the Apple TV link.";});
 }
 async function renderSearch(){
  currentPage="recherche";
@@ -498,7 +507,7 @@ async function fetchGenreItems(page,force=false){
    const link=m.trackViewUrl||m.collectionViewUrl;
    if(!id||!title||!link||!m.artworkUrl100)continue;
    if(config.media==="movie"&&m.kind!=="feature-movie")continue;
-   unique.set(id,{id,title,release:m.releaseDate||"",genre:m.primaryGenreName||"Série",poster:m.artworkUrl100,link,preview:m.previewUrl||"",description:m.longDescription||m.shortDescription||"",duration:m.trackTimeMillis?Math.round(m.trackTimeMillis/60000):null,rating:m.contentAdvisoryRating||""});
+   unique.set(id,{id,title,release:m.releaseDate||"",genre:m.primaryGenreName||"Series",poster:m.artworkUrl100,link,preview:m.previewUrl||"",description:m.longDescription||m.shortDescription||"",duration:m.trackTimeMillis?Math.round(m.trackTimeMillis/60000):null,rating:m.contentAdvisoryRating||""});
   }
  }
  const items=[...unique.values()].sort((a,b)=>b.release.localeCompare(a.release));
